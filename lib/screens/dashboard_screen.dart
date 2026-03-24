@@ -593,7 +593,7 @@ class _VaultViewState extends ConsumerState<VaultView> {
     return Column(
       children: [
         _SearchSectionHeader(
-          title: 'Vault',
+          title: 'Google Password Manager',
           searchHint: 'Buscar credencial...',
           onSearchChanged: (val) {
             _searchDebounce?.cancel();
@@ -623,22 +623,109 @@ class _VaultViewState extends ConsumerState<VaultView> {
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                 )
-              : GridView.builder(
-                  padding: const EdgeInsets.all(32),
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 400,
-                    mainAxisExtent: 180,
-                    crossAxisSpacing: 24,
-                    mainAxisSpacing: 24,
-                  ),
-                  itemCount: items.length,
-                  itemBuilder: (context, i) => _VaultCard(
-                    key: ValueKey(items[i].id),
-                    item: items[i],
+              : Padding(
+                  padding: const EdgeInsets.fromLTRB(32, 8, 32, 24),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          _VaultTopChip(
+                            icon: LucideIcons.keyRound,
+                            label: '${items.length} credenciales',
+                          ),
+                          const SizedBox(width: 12),
+                          _VaultTopChip(
+                            icon: LucideIcons.shieldCheck,
+                            label: 'Revisión de seguridad',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(12),
+                            topRight: Radius.circular(12),
+                          ),
+                          border: Border.all(color: Theme.of(context).dividerColor),
+                        ),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 270,
+                              child: Text('Sitio', style: Theme.of(context).textTheme.labelLarge),
+                            ),
+                            SizedBox(
+                              width: 230,
+                              child: Text('Usuario', style: Theme.of(context).textTheme.labelLarge),
+                            ),
+                            Expanded(
+                              child: Text('Contraseña', style: Theme.of(context).textTheme.labelLarge),
+                            ),
+                            SizedBox(
+                              width: 110,
+                              child: Text('Actualizado', style: Theme.of(context).textTheme.labelLarge),
+                            ),
+                            const SizedBox(width: 120),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            border: Border(
+                              left: BorderSide(color: Theme.of(context).dividerColor),
+                              right: BorderSide(color: Theme.of(context).dividerColor),
+                              bottom: BorderSide(color: Theme.of(context).dividerColor),
+                            ),
+                            borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(12),
+                              bottomRight: Radius.circular(12),
+                            ),
+                          ),
+                          child: ListView.separated(
+                            itemCount: items.length,
+                            separatorBuilder: (_, index) => Divider(height: 1, color: Theme.of(context).dividerColor),
+                            itemBuilder: (context, i) => _VaultCard(
+                              key: ValueKey(items[i].id),
+                              item: items[i],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
         ),
       ],
+    );
+  }
+}
+
+class _VaultTopChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _VaultTopChip({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border.all(color: Theme.of(context).dividerColor),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: Theme.of(context).primaryColor),
+          const SizedBox(width: 8),
+          Text(label, style: Theme.of(context).textTheme.labelLarge),
+        ],
+      ),
     );
   }
 }
@@ -656,146 +743,121 @@ class _VaultCardState extends ConsumerState<_VaultCard> {
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
+    final username = item.username?.isNotEmpty == true ? item.username! : 'Sin usuario';
+    final password = item.password?.isNotEmpty == true ? item.password! : '-';
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Theme.of(context).dividerColor),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.accentPrimary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+          SizedBox(
+            width: 270,
+            child: Row(
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor.withOpacity(0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    item.title.isEmpty ? '?' : item.title[0].toUpperCase(),
+                    style: TextStyle(
+                      color: Theme.of(context).primaryColor,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
-                child: const Icon(LucideIcons.key, color: AppTheme.accentPrimary, size: 16),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(item.title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-              ),
-              if (item.url != null && item.url!.isNotEmpty)
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    item.title,
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            width: 230,
+            child: SelectableText(
+              username,
+              maxLines: 1,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _showPassword ? password : '••••••••••',
+                    style: const TextStyle(fontFamily: 'Courier', fontWeight: FontWeight.w600, fontSize: 13),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
                 IconButton(
-                  icon: const Icon(LucideIcons.externalLink, size: 14, color: Colors.grey),
-                  onPressed: () async {
-                    final uri = Uri.tryParse(item.url!);
-                    if (uri != null) launchUrl(uri);
-                  },
-                  tooltip: 'Abrir URL',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
+                  icon: Icon(_showPassword ? LucideIcons.eyeOff : LucideIcons.eye, size: 16),
+                  onPressed: password == '-' ? null : () => setState(() => _showPassword = !_showPassword),
+                  tooltip: _showPassword ? 'Ocultar' : 'Mostrar',
                 ),
-              const SizedBox(width: 12),
-              IconButton(
-                icon: const Icon(LucideIcons.edit2, size: 14, color: Colors.grey),
-                onPressed: () => VaultView.showAddDialog(context, ref, existingItem: item),
-                tooltip: 'Editar',
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-              const SizedBox(width: 12),
-              IconButton(
-                icon: const Icon(LucideIcons.trash2, size: 14, color: Colors.redAccent),
-                onPressed: () => ref.read(vaultProvider.notifier).deleteItem(item.id),
-                tooltip: 'Eliminar',
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-            ],
+                IconButton(
+                  icon: const Icon(LucideIcons.copy, size: 16),
+                  onPressed: password == '-'
+                      ? null
+                      : () {
+                          Clipboard.setData(ClipboardData(text: password));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Contraseña copiada')),
+                          );
+                        },
+                ),
+              ],
+            ),
           ),
-          const Spacer(),
-          _CopyRow(
-            label: 'User',
-            value: item.username?.isNotEmpty == true ? item.username! : '-',
-            isObscured: false,
+          SizedBox(
+            width: 110,
+            child: Text(
+              DateFormat('dd/MM').format(item.updatedAt),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           ),
-          const SizedBox(height: 10),
-          _CopyRow(
-            label: 'Pass',
-            value: item.password?.isNotEmpty == true ? item.password! : '-',
-            isObscured: !_showPassword,
-            onToggleVisibility: () => setState(() => _showPassword = !_showPassword),
+          SizedBox(
+            width: 120,
+            child: Row(
+              children: [
+                if (item.url != null && item.url!.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(LucideIcons.externalLink, size: 16),
+                    onPressed: () async {
+                      final uri = Uri.tryParse(item.url!);
+                      if (uri != null) {
+                        await launchUrl(uri);
+                      }
+                    },
+                    tooltip: 'Abrir',
+                  ),
+                IconButton(
+                  icon: const Icon(LucideIcons.edit2, size: 16),
+                  onPressed: () => VaultView.showAddDialog(context, ref, existingItem: item),
+                  tooltip: 'Editar',
+                ),
+                IconButton(
+                  icon: const Icon(LucideIcons.trash2, size: 16, color: Colors.redAccent),
+                  onPressed: () => ref.read(vaultProvider.notifier).deleteItem(item.id),
+                  tooltip: 'Eliminar',
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 }
-
-class _CopyRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool isObscured;
-  final VoidCallback? onToggleVisibility;
-
-  const _CopyRow({required this.label, required this.value, required this.isObscured, this.onToggleVisibility});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    return Row(
-      children: [
-        SizedBox(
-          width: 45, 
-          child: Text(label, style: const TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.w600)),
-        ),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: isDark ? Colors.white.withOpacity(0.03) : Colors.black.withOpacity(0.03),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: isDark ? Colors.transparent : Colors.black.withOpacity(0.03)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    isObscured ? '••••••••••••' : value,
-                    style: TextStyle(
-                      fontFamily: 'Courier',
-                      fontWeight: isObscured ? FontWeight.w900 : FontWeight.w600,
-                      fontSize: 13,
-                      letterSpacing: isObscured ? 2.0 : 0.0,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (onToggleVisibility != null && value != '-')
-                  InkWell(
-                    onTap: onToggleVisibility,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                      child: Icon(isObscured ? LucideIcons.eye : LucideIcons.eyeOff, size: 14, color: Colors.grey),
-                    ),
-                  ),
-                const SizedBox(width: 8),
-                if (value != '-')
-                  InkWell(
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: value));
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$label copiado', style: const TextStyle(fontWeight: FontWeight.bold))));
-                    },
-                    child: const Icon(LucideIcons.copy, size: 14, color: AppTheme.accentPrimary),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 
 class NotesView extends ConsumerStatefulWidget {
   const NotesView({super.key});
@@ -928,7 +990,7 @@ class _NotesViewState extends ConsumerState<NotesView> {
     return Column(
       children: [
         _SearchSectionHeader(
-          title: 'Notes',
+          title: 'Google Keep',
           searchHint: 'Buscar notas...',
           onSearchChanged: (val) {
             _searchDebounce?.cancel();
@@ -960,11 +1022,11 @@ class _NotesViewState extends ConsumerState<NotesView> {
                 )
               : GridView.builder(
                   padding: const EdgeInsets.all(24),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 320,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
-                    childAspectRatio: 1.8,
+                    childAspectRatio: 1.2,
                   ),
                   itemCount: notes.length,
                   itemBuilder: (context, i) => _NoteCard(
@@ -984,9 +1046,10 @@ class _NoteCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final preview = _makeNotePreview(note.content);
+    final cardColor = _keepNoteColor(context, note.id);
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: cardColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Theme.of(context).dividerColor),
       ),
@@ -1042,6 +1105,11 @@ class _NoteCard extends ConsumerWidget {
               maxLines: 6,
               overflow: TextOverflow.ellipsis,
             ),
+            const Spacer(),
+            Text(
+              DateFormat('d MMM').format(note.updatedAt),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           ],
         ),
       ),
@@ -1058,6 +1126,26 @@ String _makeNotePreview(String content) {
   const maxChars = 220;
   if (cleaned.length <= maxChars) return cleaned;
   return '${cleaned.substring(0, maxChars)}...';
+}
+
+Color _keepNoteColor(BuildContext context, String id) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  const lightPalette = [
+    Color(0xFFFFF8E1),
+    Color(0xFFE8F0FE),
+    Color(0xFFE6F4EA),
+    Color(0xFFF3E8FD),
+    Color(0xFFFCE8E6),
+  ];
+  const darkPalette = [
+    Color(0xFF3A3220),
+    Color(0xFF223047),
+    Color(0xFF25392B),
+    Color(0xFF382A46),
+    Color(0xFF472B2B),
+  ];
+  final idx = id.codeUnits.fold<int>(0, (sum, c) => sum + c) % lightPalette.length;
+  return isDark ? darkPalette[idx] : lightPalette[idx];
 }
 
 class SettingsView extends ConsumerWidget {
