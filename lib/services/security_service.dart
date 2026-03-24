@@ -11,7 +11,7 @@ class SecurityService {
     final containsKey = await _secureStorage.containsKey(key: _keyName);
     if (!containsKey) {
       final key = Hive.generateSecureKey();
-      await _secureStorage.write(key: _keyName, value: base64UrlEncode(key));
+      await _secureStorage.write(key: _keyName, value: base64Url.encode(key));
     }
     final keyString = await _secureStorage.read(key: _keyName);
     return base64Url.decode(keyString!);
