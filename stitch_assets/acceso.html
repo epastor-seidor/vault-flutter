@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary-dim": "#55534c",
+              "primary-fixed-dim": "#d6d4d3",
+              "surface-container": "#ecefec",
+              "on-secondary-fixed-variant": "#5c5b58",
+              "on-secondary-container": "#52524e",
+              "primary-dim": "#535252",
+              "background": "#f9f9f7",
+              "outline-variant": "#adb3b0",
+              "on-primary": "#faf7f6",
+              "inverse-primary": "#ffffff",
+              "on-primary-container": "#525151",
+              "on-error-container": "#752121",
+              "tertiary-fixed-dim": "#eae5dc",
+              "outline": "#767c79",
+              "surface-container-high": "#e5e9e6",
+              "inverse-on-surface": "#9c9d9b",
+              "on-error": "#fff7f6",
+              "surface": "#f9f9f7",
+              "on-tertiary-fixed-variant": "#69665f",
+              "on-secondary-fixed": "#403f3c",
+              "error-container": "#fe8983",
+              "secondary": "#605f5b",
+              "error": "#9f403d",
+              "secondary-container": "#e5e2dd",
+              "on-secondary": "#fbf9f3",
+              "surface-dim": "#d4dcd8",
+              "tertiary-container": "#f8f3ea",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary-container": "#5e5b55",
+              "secondary-fixed": "#e5e2dd",
+              "on-tertiary-fixed": "#4c4943",
+              "surface-bright": "#f9f9f7",
+              "secondary-fixed-dim": "#d6d4cf",
+              "surface-variant": "#dee4e0",
+              "primary": "#5f5e5e",
+              "tertiary": "#625f58",
+              "tertiary-fixed": "#f8f3ea",
+              "secondary-dim": "#54534f",
+              "primary-container": "#e5e2e1",
+              "surface-tint": "#5f5e5e",
+              "on-background": "#2d3432",
+              "on-primary-fixed-variant": "#5c5b5b",
+              "inverse-surface": "#0d0f0e",
+              "on-primary-fixed": "#403f3f",
+              "on-surface-variant": "#5a605e",
+              "error-dim": "#4e0309",
+              "surface-container-low": "#f2f4f2",
+              "primary-fixed": "#e5e2e1",
+              "on-surface": "#2d3432",
+              "on-tertiary": "#fef8ef",
+              "surface-container-highest": "#dee4e0"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased min-h-screen flex flex-col items-center justify-center p-6 selection:bg-primary-container selection:text-on-primary-container">
+<!-- Auth Canvas -->
+<main class="w-full max-w-[420px] space-y-12">
+<!-- Branding Section -->
+<header class="flex flex-col items-center text-center space-y-6">
+<div class="relative group">
+<div class="absolute -inset-1 bg-gradient-to-tr from-primary/10 to-transparent blur-xl rounded-full opacity-50 group-hover:opacity-100 transition duration-1000"></div>
+<div class="relative w-16 h-16 bg-surface-container-lowest flex items-center justify-center rounded-xl shadow-sm border border-outline-variant/10">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="lock" style="font-variation-settings: 'FILL' 1;">lock</span>
+</div>
+</div>
+<div class="space-y-3">
+<h1 class="text-2xl font-extrabold tracking-tight text-on-surface">Vault</h1>
+<p class="text-on-surface-variant leading-relaxed text-sm max-w-[280px] mx-auto">
+                    Ingresa tu contraseña maestra para desbloquear tus credenciales y notas.
+                </p>
+</div>
+</header>
+<!-- Form Section -->
+<section class="bg-surface-container-lowest p-8 rounded-xl shadow-[0px_12px_32px_rgba(45,52,50,0.06)] space-y-6 border border-outline-variant/5">
+<form action="#" class="space-y-6">
+<div class="space-y-2">
+<div class="flex justify-between items-center">
+<label class="text-xs font-semibold tracking-wider text-on-surface-variant uppercase" for="master-password">Contraseña Maestra</label>
+</div>
+<div class="relative group">
+<input class="w-full bg-surface-container-low border-b border-outline-variant/30 py-4 px-4 text-on-surface placeholder:text-outline-variant focus:outline-none focus:border-primary transition-all duration-300 rounded-lg group-hover:bg-surface-container" id="master-password" placeholder="••••••••••••" type="password"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-xl" data-icon="visibility">visibility</span>
+</button>
+</div>
+</div>
+<button class="w-full py-4 bg-primary text-on-primary font-semibold rounded-full hover:bg-primary-dim active:scale-[0.98] transition-all shadow-md shadow-primary/10" type="submit">
+                    Desbloquear
+                </button>
+</form>
+<div class="flex flex-col items-center gap-4 pt-4">
+<a class="text-xs font-medium text-on-surface-variant hover:text-primary transition-colors decoration-outline-variant/30 underline-offset-4 hover:underline" href="#">
+                    Olvidé mi contraseña
+                </a>
+<div class="flex items-center gap-2 pt-2">
+<span class="w-1 h-1 rounded-full bg-outline-variant/40"></span>
+<span class="w-1 h-1 rounded-full bg-outline-variant/40"></span>
+<span class="w-1 h-1 rounded-full bg-outline-variant/40"></span>
+</div>
+</div>
+</section>
+<!-- Security Badge -->
+<footer class="flex items-center justify-center gap-2 opacity-50 select-none">
+<span class="material-symbols-outlined text-sm" data-icon="verified_user">verified_user</span>
+<span class="text-[10px] font-semibold tracking-widest uppercase">End-to-End Encrypted</span>
+</footer>
+</main>
+<!-- Contextual Decorative Elements (Atelier Feel) -->
+<div class="fixed top-0 right-0 p-12 hidden lg:block opacity-20">
+<div class="w-64 h-64 bg-surface-container-high rounded-full mix-blend-multiply blur-3xl"></div>
+</div>
+<div class="fixed bottom-0 left-0 p-12 hidden lg:block opacity-20">
+<div class="w-96 h-96 bg-secondary-container rounded-full mix-blend-multiply blur-3xl"></div>
+</div>
+</body></html>

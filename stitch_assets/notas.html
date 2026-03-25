@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary-dim": "#55534c",
+              "primary-fixed-dim": "#d6d4d3",
+              "surface-container": "#ecefec",
+              "on-secondary-fixed-variant": "#5c5b58",
+              "on-secondary-container": "#52524e",
+              "primary-dim": "#535252",
+              "background": "#f9f9f7",
+              "outline-variant": "#adb3b0",
+              "on-primary": "#faf7f6",
+              "inverse-primary": "#ffffff",
+              "on-primary-container": "#525151",
+              "on-error-container": "#752121",
+              "tertiary-fixed-dim": "#eae5dc",
+              "outline": "#767c79",
+              "surface-container-high": "#e5e9e6",
+              "inverse-on-surface": "#9c9d9b",
+              "on-error": "#fff7f6",
+              "surface": "#f9f9f7",
+              "on-tertiary-fixed-variant": "#69665f",
+              "on-secondary-fixed": "#403f3c",
+              "error-container": "#fe8983",
+              "secondary": "#605f5b",
+              "error": "#9f403d",
+              "secondary-container": "#e5e2dd",
+              "on-secondary": "#fbf9f3",
+              "surface-dim": "#d4dcd8",
+              "tertiary-container": "#f8f3ea",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary-container": "#5e5b55",
+              "secondary-fixed": "#e5e2dd",
+              "on-tertiary-fixed": "#4c4943",
+              "surface-bright": "#f9f9f7",
+              "secondary-fixed-dim": "#d6d4cf",
+              "surface-variant": "#dee4e0",
+              "primary": "#5f5e5e",
+              "tertiary": "#625f58",
+              "tertiary-fixed": "#f8f3ea",
+              "secondary-dim": "#54534f",
+              "primary-container": "#e5e2e1",
+              "surface-tint": "#5f5e5e",
+              "on-background": "#2d3432",
+              "on-primary-fixed-variant": "#5c5b5b",
+              "inverse-surface": "#0d0f0e",
+              "on-primary-fixed": "#403f3f",
+              "on-surface-variant": "#5a605e",
+              "error-dim": "#4e0309",
+              "surface-container-low": "#f2f4f2",
+              "primary-fixed": "#e5e2e1",
+              "on-surface": "#2d3432",
+              "on-tertiary": "#fef8ef",
+              "surface-container-highest": "#dee4e0"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-background text-on-surface antialiased">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-[#f2f4f2] dark:bg-stone-900 font-inter antialiased text-sm tracking-tight flex flex-col p-4 gap-2 z-50">
+<div class="flex items-center gap-3 px-2 mb-6">
+<div class="w-8 h-8 rounded bg-primary flex items-center justify-center text-on-primary font-bold">V</div>
+<div class="flex flex-col">
+<span class="text-lg font-semibold text-[#191919] dark:text-stone-100">The Digital Atelier</span>
+<span class="text-xs text-on-surface-variant">Secure Workspace</span>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 text-[#5a605e] dark:text-stone-400 hover:bg-[#ecefec]/50 dark:hover:bg-stone-800/50 rounded-md transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="vpn_key">vpn_key</span>
+<span>Credentials</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-[#ecefec] dark:bg-stone-800 text-[#191919] dark:text-white font-medium rounded-md transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span>Notes</span>
+</a>
+</nav>
+<button class="mt-4 flex items-center justify-center gap-2 bg-primary text-on-primary py-2 px-4 rounded-md font-medium scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+<span>Add New</span>
+</button>
+<div class="mt-auto flex flex-col gap-1 pt-4">
+<a class="flex items-center gap-3 px-3 py-2 text-[#5a605e] dark:text-stone-400 hover:bg-[#ecefec]/50 rounded-md transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#5a605e] dark:text-stone-400 hover:bg-[#ecefec]/50 rounded-md transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="lock">lock</span>
+<span>Lock</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<header class="sticky top-0 w-full z-40 bg-[#f9f9f7]/80 dark:bg-stone-950/80 backdrop-blur-md flex justify-between items-center h-14 px-6 border-b border-[#adb3b0]/15">
+<div class="flex items-center gap-4">
+<nav class="flex items-center text-on-surface-variant text-sm gap-2">
+<span class="material-symbols-outlined text-lg" data-icon="folder_open">folder_open</span>
+<span>Workspace</span>
+<span class="text-outline-variant">/</span>
+<span class="text-on-surface font-medium">Notes</span>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 font-inter text-sm font-medium">
+<a class="text-[#5a605e] dark:text-stone-400 hover:text-[#191919] dark:hover:text-white" href="#">All Items</a>
+<a class="text-[#5a605e] dark:text-stone-400 hover:text-[#191919] dark:hover:text-white" href="#">Favorites</a>
+<a class="text-[#5a605e] dark:text-stone-400 hover:text-[#191919] dark:hover:text-white" href="#">Recent</a>
+</div>
+<div class="flex items-center gap-2 border-l border-outline-variant/30 pl-6">
+<button class="material-symbols-outlined p-1 text-on-surface-variant hover:bg-[#f2f4f2] rounded transition-colors" data-icon="sync">sync</button>
+<button class="material-symbols-outlined p-1 text-on-surface-variant hover:bg-[#f2f4f2] rounded transition-colors" data-icon="search">search</button>
+<button class="material-symbols-outlined p-1 text-on-surface-variant hover:bg-[#f2f4f2] rounded transition-colors" data-icon="more_vert">more_vert</button>
+</div>
+</div>
+</header>
+<!-- Editor Interface -->
+<section class="flex flex-1 overflow-hidden">
+<!-- Notes List Sidebar (Sub-navigation) -->
+<div class="w-80 bg-surface-container-low border-r border-outline-variant/10 flex flex-col overflow-y-auto no-scrollbar">
+<div class="p-4 flex items-center justify-between">
+<h2 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Recent Notes</h2>
+<span class="material-symbols-outlined text-sm text-on-surface-variant" data-icon="filter_list">filter_list</span>
+</div>
+<div class="px-2 space-y-1">
+<button class="w-full text-left px-3 py-3 bg-surface-container-lowest rounded-lg shadow-sm border border-outline-variant/5 transition-all">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-base text-primary" data-icon="article">article</span>
+<span class="text-sm font-semibold truncate">Configuración Servidor Proyectos</span>
+</div>
+<p class="text-xs text-on-surface-variant line-clamp-2">Detalles técnicos del despliegue en AWS y variables de entorno necesarias para...</p>
+</button>
+<button class="w-full text-left px-3 py-3 hover:bg-surface-container rounded-lg transition-all">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-base text-on-surface-variant" data-icon="description">description</span>
+<span class="text-sm font-medium truncate">Ideación Landing Page 2024</span>
+</div>
+<p class="text-xs text-on-surface-variant line-clamp-2">Conceptos minimalistas y paleta de colores tierra para la nueva campaña...</p>
+</button>
+<button class="w-full text-left px-3 py-3 hover:bg-surface-container rounded-lg transition-all">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-base text-on-surface-variant" data-icon="terminal">terminal</span>
+<span class="text-sm font-medium truncate">Scripts de Respaldo DB</span>
+</div>
+<p class="text-xs text-on-surface-variant line-clamp-2">Bash scripts para automatizar los volcados semanales a S3...</p>
+</button>
+<button class="w-full text-left px-3 py-3 hover:bg-surface-container rounded-lg transition-all">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-base text-on-surface-variant" data-icon="note">note</span>
+<span class="text-sm font-medium truncate">Lista de Lectura Q4</span>
+</div>
+<p class="text-xs text-on-surface-variant line-clamp-2">Libros sobre diseño sistémico y arquitectura de información...</p>
+</button>
+</div>
+</div>
+<!-- Content Canvas -->
+<div class="flex-1 bg-surface overflow-y-auto no-scrollbar relative">
+<!-- Floating Toolbar (Notion Style) -->
+<div class="sticky top-4 left-1/2 -translate-x-1/2 w-max bg-surface-container-lowest border border-outline-variant/15 shadow-xl rounded-full px-4 py-2 flex items-center gap-3 z-30 mb-8 opacity-90 hover:opacity-100 transition-opacity">
+<button class="p-1 hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-xl" data-icon="format_bold">format_bold</span></button>
+<button class="p-1 hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-xl" data-icon="format_italic">format_italic</span></button>
+<button class="p-1 hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-xl" data-icon="format_list_bulleted">format_list_bulleted</span></button>
+<div class="w-px h-4 bg-outline-variant/30"></div>
+<button class="p-1 hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-xl" data-icon="link">link</span></button>
+<button class="p-1 hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-xl" data-icon="image">image</span></button>
+<button class="p-1 hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-xl" data-icon="code">code</span></button>
+</div>
+<div class="max-w-3xl mx-auto pt-12 pb-24 px-12">
+<!-- Hero/Header Image -->
+<div class="w-full h-48 rounded-xl overflow-hidden mb-12">
+<img alt="Technology background" class="w-full h-full object-cover" data-alt="Abstract cyber security background with green digital circuits and dark textured surface in a cinematic tech studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuArweGbQujJ3dk0YqwTrn3Kj0i7-iDTeCGK7WQfaSj_pEhJuAkFwgtyXni-Lrryb5IZuq9vmWE4DOOvexcQQv1285e8mbO-s0mn2H5WVre7AuNyBSMvxeAQvRKE-AT1PSyW7g9tkfC-zXEZnK9A1DTEJE7TH34s75vUbE5EBdBhWAK2ROkuU3xMdJkRsvTIzGNj_bK1-NzTOxhmbORd31Fzr8_KqWlo22Nr1kAS2mVbFkiylmWzogD16UxMVIjH6S76EHEpKtQl1Tw0"/>
+</div>
+<div class="flex items-center gap-3 mb-6">
+<span class="px-2 py-1 bg-secondary-container text-on-secondary-container rounded text-[10px] font-bold uppercase tracking-wider">Servidor</span>
+<span class="px-2 py-1 bg-tertiary-container text-on-tertiary-container rounded text-[10px] font-bold uppercase tracking-wider">DevOps</span>
+</div>
+<h1 class="text-4xl font-extrabold text-on-surface tracking-tight leading-tight mb-4">Configuración Servidor Proyectos</h1>
+<div class="flex items-center gap-4 text-on-surface-variant text-sm mb-12 pb-8 border-b border-outline-variant/10">
+<div class="flex items-center gap-2">
+<img alt="Author" class="w-6 h-6 rounded-full object-cover" data-alt="Portrait of a young professional man with short dark hair and a friendly expression in a bright modern office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAoumws_kZJDlzKW6cJiJ3gVBj4BI_a7oi-NxiGIu-2PVQ0j_KgQkj8oRKLgEew4O7-Cis-ptkV4HGVnRKADUyoxkiJno0T-0j5ONFPkLprbe-NBlMAjui9InGTL9CBkvcIJCLABspe9fKd5TjHUiTAAUQE0RAlX7zDtaYm8S4qqPgu-MfjaYPPqyGrsPCQOCmELrYaaFhUKvW_rGN80cqobETwzIWusI0UcYFHsvJAe7dFU0MQjgidim-L-SXCsB0YmSVEsoAwN1_j"/>
+<span class="font-medium">Alex Rivera</span>
+</div>
+<span class="text-outline-variant">•</span>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-base" data-icon="calendar_today">calendar_today</span>
+<span>24 de Octubre, 2023</span>
+</div>
+</div>
+<div class="space-y-6 text-lg text-on-surface/90 leading-relaxed font-body">
+<p>
+                            Esta guía detalla los pasos críticos realizados para configurar el clúster de producción. Se ha priorizado la seguridad mediante la implementación de claves SSH de 4096 bits y la desactivación del login root por contraseña.
+                        </p>
+<div class="bg-surface-container-low p-6 rounded-lg border-l-4 border-primary">
+<p class="text-base italic">
+                                "La automatización no es solo para ahorrar tiempo, es para garantizar la repetibilidad y eliminar el error humano en entornos de alta disponibilidad."
+                            </p>
+</div>
+<h3 class="text-xl font-bold mt-12 mb-4">Fragmento de Configuración Nginx</h3>
+<div class="bg-inverse-surface text-inverse-on-surface p-6 rounded-xl font-mono text-sm overflow-x-auto shadow-inner">
+<div class="flex gap-2 mb-4 opacity-40">
+<div class="w-3 h-3 rounded-full bg-red-500"></div>
+<div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+<div class="w-3 h-3 rounded-full bg-green-500"></div>
+</div>
+<pre><code>server {
+    listen 443 ssl http2;
+    server_name core.atelier.digital;
+
+    ssl_certificate /etc/letsencrypt/live/atelier/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/atelier/privkey.pem;
+
+    location / {
+        proxy_pass http://localhost:8080;
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}</code></pre>
+</div>
+<h3 class="text-xl font-bold mt-12 mb-4">Lista de Verificación Final</h3>
+<ul class="space-y-4">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary mt-1" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div>
+<span class="font-semibold">Firewall (UFW):</span>
+<p class="text-base text-on-surface-variant">Solo puertos 22, 80 y 443 abiertos.</p>
+</div>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary mt-1" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div>
+<span class="font-semibold">Monitoreo:</span>
+<p class="text-base text-on-surface-variant">Agente de Datadog instalado y reportando métricas.</p>
+</div>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-outline-variant mt-1" data-icon="radio_button_unchecked">radio_button_unchecked</span>
+<div>
+<span class="font-semibold">Backups:</span>
+<p class="text-base text-on-surface-variant">Configurar el script cron para respaldos nocturnos a S3.</p>
+</div>
+</li>
+</ul>
+<div class="grid grid-cols-2 gap-4 mt-12">
+<div class="aspect-video rounded-xl overflow-hidden bg-surface-container-high flex flex-col items-center justify-center border border-dashed border-outline-variant">
+<span class="material-symbols-outlined text-4xl text-outline-variant mb-2" data-icon="add_photo_alternate">add_photo_alternate</span>
+<span class="text-xs text-on-surface-variant">Click para añadir captura de pantalla</span>
+</div>
+<div class="aspect-video rounded-xl overflow-hidden bg-surface-container-high flex flex-col items-center justify-center border border-dashed border-outline-variant">
+<span class="material-symbols-outlined text-4xl text-outline-variant mb-2" data-icon="attach_file">attach_file</span>
+<span class="text-xs text-on-surface-variant">Añadir archivo .env de ejemplo</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Contextual Actions (Right sidebar, hidden on smaller screens) -->
+<div class="w-16 border-l border-outline-variant/10 flex flex-col items-center py-6 gap-6 bg-surface-container-lowest">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-icon="chat_bubble_outline">chat_bubble_outline</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-icon="history">history</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-icon="share">share</button>
+<div class="w-8 h-px bg-outline-variant/20"></div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-icon="star" data-weight="fill">star</button>
+</div>
+</section>
+</main>
+</body></html>

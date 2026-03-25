@@ -50,6 +50,7 @@ dependencies:
   window_manager: ^0.5.1
   intl: ^0.20.2
   flutter_markdown: ^0.7.7+1
+  pasteboard: ^0.2.0
 
 dev_dependencies:
   flutter_test:
@@ -61,6 +62,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  msix: ^3.16.13
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -83,6 +85,8 @@ flutter:
 
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
+  assets:
+    - assets/icon/
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
@@ -103,3 +107,13 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# msix configuration
+msix_config:
+  display_name: DevVault
+  publisher_display_name: DevVault Team
+  identity_name: com.devvault.app
+  publisher: CN=DevVault, O=DevVault, L=City, S=State, C=US
+  logo_path: assets/icon/app_icon.png
+  store: false
+  install_certificate: true # Generate a self-signed cert for testing

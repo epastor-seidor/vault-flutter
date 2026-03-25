@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary-dim": "#55534c",
+              "primary-fixed-dim": "#d6d4d3",
+              "surface-container": "#ecefec",
+              "on-secondary-fixed-variant": "#5c5b58",
+              "on-secondary-container": "#52524e",
+              "primary-dim": "#535252",
+              "background": "#f9f9f7",
+              "outline-variant": "#adb3b0",
+              "on-primary": "#faf7f6",
+              "inverse-primary": "#ffffff",
+              "on-primary-container": "#525151",
+              "on-error-container": "#752121",
+              "tertiary-fixed-dim": "#eae5dc",
+              "outline": "#767c79",
+              "surface-container-high": "#e5e9e6",
+              "inverse-on-surface": "#9c9d9b",
+              "on-error": "#fff7f6",
+              "surface": "#f9f9f7",
+              "on-tertiary-fixed-variant": "#69665f",
+              "on-secondary-fixed": "#403f3c",
+              "error-container": "#fe8983",
+              "secondary": "#605f5b",
+              "error": "#9f403d",
+              "secondary-container": "#e5e2dd",
+              "on-secondary": "#fbf9f3",
+              "surface-dim": "#d4dcd8",
+              "tertiary-container": "#f8f3ea",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary-container": "#5e5b55",
+              "secondary-fixed": "#e5e2dd",
+              "on-tertiary-fixed": "#4c4943",
+              "surface-bright": "#f9f9f7",
+              "secondary-fixed-dim": "#d6d4cf",
+              "surface-variant": "#dee4e0",
+              "primary": "#5f5e5e",
+              "tertiary": "#625f58",
+              "tertiary-fixed": "#f8f3ea",
+              "secondary-dim": "#54534f",
+              "primary-container": "#e5e2e1",
+              "surface-tint": "#5f5e5e",
+              "on-background": "#2d3432",
+              "on-primary-fixed-variant": "#5c5b5b",
+              "inverse-surface": "#0d0f0e",
+              "on-primary-fixed": "#403f3f",
+              "on-surface-variant": "#5a605e",
+              "error-dim": "#4e0309",
+              "surface-container-low": "#f2f4f2",
+              "primary-fixed": "#e5e2e1",
+              "on-surface": "#2d3432",
+              "on-tertiary": "#fef8ef",
+              "surface-container-highest": "#dee4e0"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased overflow-hidden">
+<!-- SideNavBar (Shared Component) -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-[#f2f4f2] dark:bg-stone-900 flex flex-col p-4 gap-2 font-inter antialiased text-sm tracking-tight z-30">
+<div class="flex items-center gap-3 px-2 mb-8">
+<div class="w-8 h-8 rounded bg-primary flex items-center justify-center text-on-primary font-bold">V</div>
+<span class="text-lg font-semibold text-[#191919] dark:text-stone-100">The Digital Atelier</span>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<a class="bg-[#ecefec] dark:bg-stone-800 text-[#191919] dark:text-white font-medium rounded-md flex items-center gap-3 px-3 py-2 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="vpn_key">vpn_key</span>
+                Credentials
+            </a>
+<a class="text-[#5a605e] dark:text-stone-400 hover:bg-[#ecefec]/50 dark:hover:bg-stone-800/50 rounded-md flex items-center gap-3 px-3 py-2 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+                Notes
+            </a>
+</nav>
+<div class="mt-auto flex flex-col gap-1 pt-4 border-t border-outline-variant/10">
+<a class="text-[#5a605e] dark:text-stone-400 hover:bg-[#ecefec]/50 dark:hover:bg-stone-800/50 rounded-md flex items-center gap-3 px-3 py-2 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                Settings
+            </a>
+<a class="text-[#5a605e] dark:text-stone-400 hover:bg-[#ecefec]/50 dark:hover:bg-stone-800/50 rounded-md flex items-center gap-3 px-3 py-2 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="lock">lock</span>
+                Lock
+            </a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-screen relative">
+<!-- TopNavBar (Shared Component) -->
+<header class="sticky top-0 w-full z-40 bg-[#f9f9f7]/80 backdrop-blur-md flex justify-between items-center h-14 px-8 border-b border-[#adb3b0]/15 font-inter text-sm font-medium">
+<div class="flex items-center gap-6">
+<a class="text-[#191919] border-b-2 border-[#5f5e5e] pb-1" href="#">All Items</a>
+<a class="text-[#5a605e] hover:text-[#191919] transition-opacity" href="#">Favorites</a>
+<a class="text-[#5a605e] hover:text-[#191919] transition-opacity" href="#">Recent</a>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative group">
+<span class="absolute left-2 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline text-lg" data-icon="search">search</span>
+<input class="bg-surface-container-low border-none rounded-md pl-9 pr-4 py-1.5 text-sm focus:ring-1 focus:ring-primary w-64 transition-all" placeholder="Search Vault..." type="text"/>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container rounded-md p-1" data-icon="sync">sync</button>
+<button class="bg-primary text-on-primary px-4 py-1.5 rounded-md hover:bg-primary-dim transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                    New Item
+                </button>
+</div>
+</header>
+<!-- Dashboard Background Content (Simulated) -->
+<div class="p-12 max-w-5xl mx-auto">
+<div class="mb-12">
+<h1 class="text-4xl font-extrabold tracking-tight text-on-background mb-2">Vault Items</h1>
+<p class="text-on-surface-variant text-lg">Securely managing 24 credentials across your workspace.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Mock Card 1 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 hover:shadow-xl hover:shadow-on-surface/5 transition-all group">
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 rounded-lg bg-[#F3F4F6] flex items-center justify-center">
+<img alt="GitHub" class="w-6 h-6 grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all" data-alt="minimalist black and white github logo icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjvgXC33Xdih8MtWNCye1TszUeC7RwVwolD0WzmpEVi5qu4qzgNoe1BD2Imew2RUh8zEg-Qk1imL7dlk2TUv5D3FgzfBCvqd7kHsZ50PHdn4XTV6TrD11zXZyGhk6pAJrqcRX-GaSiYvvRMpUTKQworVCjhtbwdctilJEORcCQeeghcbgpzaJX80W4zV5n1coMiGP-lt7KG5HLo4XT8WcSOb_vhIJfXsH4iMGwdJWp8G7wYAukDV7BcIh1NaS1oWZiD44v0L_Pwaj_"/>
+</div>
+<span class="material-symbols-outlined text-outline-variant" data-icon="star">star</span>
+</div>
+<h3 class="font-bold text-lg mb-1">GitHub</h3>
+<p class="text-sm text-on-surface-variant mb-4">user_dev</p>
+<div class="flex gap-2">
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold tracking-wider uppercase">Development</span>
+</div>
+</div>
+<!-- Mock Card 2 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 hover:shadow-xl hover:shadow-on-surface/5 transition-all group">
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 rounded-lg bg-[#F3F4F6] flex items-center justify-center">
+<img alt="Figma" class="w-6 h-6 grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all" data-alt="clean figma color logo icon on white background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTj90dVOmGJgz70TfYVtaLge6OhVG4oo4V9wQ4OgjO-JZc8n3PD4wWwWCyjEGziPEqZgCYyFcDs66WWDN8Y5mHBTz0q33ziZuD2mfIRNjtC-d01bT5DI6798mRgTFLuZTWC3z2BUO0EHPDqnGRKLVqeLb36GInd56Q9H5-_6tAVIesOZ-81pJ_fZx7Bxz3BSniMdgWbtiBJwRfrSi9m_VKsRdRM1TQEaJW4WUPUPVUL24dbp7jfaqMTrfsDAxpPZs1i5ijWYHT0iT2"/>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<h3 class="font-bold text-lg mb-1">Figma</h3>
+<p class="text-sm text-on-surface-variant mb-4">creative_lead</p>
+<div class="flex gap-2">
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold tracking-wider uppercase">Design</span>
+</div>
+</div>
+<!-- Mock Card 3 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 hover:shadow-xl hover:shadow-on-surface/5 transition-all group">
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 rounded-lg bg-[#F3F4F6] flex items-center justify-center">
+<span class="material-symbols-outlined text-outline" data-icon="terminal">terminal</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant" data-icon="star">star</span>
+</div>
+<h3 class="font-bold text-lg mb-1">AWS Console</h3>
+<p class="text-sm text-on-surface-variant mb-4">admin_root</p>
+<div class="flex gap-2">
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold tracking-wider uppercase">Infra</span>
+</div>
+</div>
+</div>
+</div>
+<!-- OVERLAY: SIDE PANEL (Credential Editor) -->
+<div class="fixed inset-0 z-50 pointer-events-none">
+<!-- Backdrop -->
+<div class="absolute inset-0 bg-inverse-surface/10 backdrop-blur-sm pointer-events-auto"></div>
+<!-- Sliding Panel -->
+<aside class="absolute right-0 top-0 h-full w-[480px] glass-panel border-l border-outline-variant/20 shadow-2xl pointer-events-auto flex flex-col">
+<!-- Panel Header -->
+<div class="px-8 py-8 flex justify-between items-start">
+<div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-outline mb-2 block">Vault / Editor</span>
+<h2 class="text-3xl font-extrabold tracking-tight text-on-background">Editar Credencial</h2>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-on-surface" data-icon="close">close</span>
+</button>
+</div>
+<!-- Editor Form -->
+<div class="flex-1 overflow-y-auto px-8 py-4 space-y-10">
+<!-- Section: Brand Identity -->
+<div class="flex items-center gap-6">
+<div class="w-20 h-20 rounded-2xl bg-surface-container flex items-center justify-center border border-outline-variant/10 relative group overflow-hidden">
+<img alt="GitHub" class="w-10 h-10 relative z-10" data-alt="sharp and clear github octocat logo for professional ui" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUF6s7SF94Q5Gvbyl9QHRwioc-JYtSQNsXNpC_Bo9G1wZx-ZzKTE7uWsJeS9vL-Rn51dJbPMlbAi4ZFIUXRUJ3f551eDzQdTd-Uumq3p4NPCx7YrRCBl-yp742UV2d-1RWTTxEVHnThMnRt2_c7bU80YI8dZShWAlEiOVUt7bxlPhx48hKgqLmcL_yLfwv65R8InjTrBzH6NoKXfA_1cpH4WI5ANXdDo3ySRaTUy8W1XFWbalA_sksUiQ53pzLJqqPhUIrJ6YPaKvg"/>
+<div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="edit">edit</span>
+</div>
+</div>
+<div class="flex-1">
+<label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Sitio / Servicio</label>
+<input class="w-full text-2xl font-bold bg-transparent border-none p-0 focus:ring-0 text-on-background placeholder:text-outline-variant" placeholder="Nombre del servicio" type="text" value="GitHub"/>
+<div class="h-[1px] w-full bg-outline-variant/20 mt-1"></div>
+</div>
+</div>
+<!-- Section: Core Data -->
+<div class="space-y-8">
+<!-- Username -->
+<div>
+<label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-2">Usuario</label>
+<div class="relative">
+<span class="absolute left-0 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline text-lg" data-icon="person">person</span>
+<input class="w-full bg-transparent border-none border-b border-outline-variant/20 pl-8 pb-2 focus:ring-0 focus:border-primary transition-all text-on-background font-medium" type="text" value="user_dev"/>
+</div>
+</div>
+<!-- Password with Generator -->
+<div>
+<div class="flex justify-between items-center mb-2">
+<label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Contraseña</label>
+<button class="text-[10px] font-bold text-primary flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-xs" data-icon="revolving_dot">square_dot</span>
+                                    GENERAR SEGURA
+                                </button>
+</div>
+<div class="relative group">
+<span class="absolute left-0 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline text-lg" data-icon="lock">lock</span>
+<input class="w-full bg-transparent border-none border-b border-outline-variant/20 pl-8 pb-2 focus:ring-0 focus:border-primary transition-all text-on-background font-mono tracking-widest" type="password" value="••••••••••••••••"/>
+<div class="absolute right-0 top-1/2 -translate-y-1/2 flex gap-2">
+<button class="material-symbols-outlined text-outline-variant hover:text-on-surface transition-colors text-lg" data-icon="visibility">visibility</button>
+<button class="material-symbols-outlined text-outline-variant hover:text-on-surface transition-colors text-lg" data-icon="content_copy">content_copy</button>
+</div>
+</div>
+<div class="mt-2 flex gap-1 h-1">
+<div class="flex-1 bg-primary rounded-full"></div>
+<div class="flex-1 bg-primary rounded-full"></div>
+<div class="flex-1 bg-primary rounded-full"></div>
+<div class="flex-1 bg-outline-variant/30 rounded-full"></div>
+<p class="text-[10px] font-medium text-on-surface-variant ml-2 -mt-1.5 italic">Seguridad fuerte</p>
+</div>
+</div>
+<!-- URL -->
+<div>
+<label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-2">URL del sitio</label>
+<div class="relative">
+<span class="absolute left-0 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline text-lg" data-icon="link">link</span>
+<input class="w-full bg-transparent border-none border-b border-outline-variant/20 pl-8 pb-2 focus:ring-0 focus:border-primary transition-all text-on-background font-medium" type="text" value="https://github.com"/>
+<a class="absolute right-0 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline-variant hover:text-primary transition-colors text-lg" data-icon="open_in_new" href="#">open_in_new</a>
+</div>
+</div>
+</div>
+<!-- Section: Additional Notes -->
+<div class="pt-4">
+<label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-3">Notas adicionales</label>
+<div class="bg-surface-container-low/50 rounded-xl p-4 border border-outline-variant/10 focus-within:border-primary/30 transition-all">
+<textarea class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm text-on-background leading-relaxed resize-none" placeholder="Escribe detalles importantes como tokens de acceso o respuestas de seguridad..." rows="4">Token de acceso personal para entorno de desarrollo. Expira el 2024-12-15.</textarea>
+</div>
+</div>
+<!-- Metadata -->
+<div class="pt-6 border-t border-outline-variant/10 flex flex-col gap-3">
+<div class="flex justify-between text-[11px] font-medium text-on-surface-variant">
+<span>ÚLTIMA MODIFICACIÓN</span>
+<span class="text-on-surface">Hace 12 horas</span>
+</div>
+<div class="flex justify-between text-[11px] font-medium text-on-surface-variant">
+<span>CREADO EL</span>
+<span class="text-on-surface">15 Oct, 2023</span>
+</div>
+</div>
+</div>
+<!-- Sticky Footer Actions -->
+<div class="p-8 border-t border-outline-variant/10 flex items-center justify-between gap-4 bg-surface/50">
+<button class="flex items-center gap-2 text-error text-sm font-bold hover:bg-error/5 px-4 py-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="delete">delete</span>
+                        Eliminar
+                    </button>
+<div class="flex gap-3">
+<button class="px-6 py-2.5 rounded-lg text-sm font-bold text-on-surface-variant hover:bg-surface-container transition-colors">Cancelar</button>
+<button class="px-8 py-2.5 rounded-lg text-sm font-bold bg-primary text-on-primary shadow-lg shadow-primary/20 hover:bg-primary-dim active:scale-95 transition-all">Guardar Cambios</button>
+</div>
+</div>
+</aside>
+</div>
+</main>
+</body></html>
