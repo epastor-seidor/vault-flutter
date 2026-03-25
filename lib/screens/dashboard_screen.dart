@@ -7,10 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:dev_vault/providers/vault_provider.dart';
 import 'package:dev_vault/providers/note_provider.dart';
+import 'package:dev_vault/providers/task_provider.dart';
 import 'package:dev_vault/providers/settings_provider.dart';
 import 'package:dev_vault/theme/app_theme.dart';
 import 'package:dev_vault/models/vault_item.dart';
 import 'package:dev_vault/models/note.dart';
+import 'package:dev_vault/models/task_item.dart';
 import 'package:dev_vault/providers/lock_provider.dart';
 import 'package:dev_vault/providers/security_log_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -133,6 +135,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       NotesView.showAddNoteDialog(context, ref);
       return;
     }
+    if (_selectedIndex == 3) {
+      TasksView.showAddTaskDialog(context, ref);
+      return;
+    }
     if (_selectedIndex == 1) {
       VaultView.showAddDialog(context, ref);
       return;
@@ -147,7 +153,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     // Stitch: glassy top bar with ghost border, bg/80 + blur
     final bg = isDark ? const Color(0xFF141414) : const Color(0xFFF9F9F7);
-    final crumb = _selectedIndex == 2 ? 'Notes' : 'Credentials';
+    final crumb = switch (_selectedIndex) {
+      1 => 'Credentials',
+      2 => 'Notes',
+      3 => 'Tasks',
+      4 => 'Settings',
+      _ => 'Home',
+    };
 
     return Container(
       height: 56,
@@ -359,6 +371,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       if (isDrawer) Navigator.pop(context);
                     },
                   ),
+                  _SidebarItem(
+                    icon: LucideIcons.checkCircle2,
+                    label: 'Tasks',
+                    isSelected: _selectedIndex == 3,
+                    onTap: () {
+                      setState(() => _selectedIndex = 3);
+                      if (isDrawer) Navigator.pop(context);
+                    },
+                  ),
                 ],
               ),
             ),
@@ -395,9 +416,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           _SidebarItem(
             icon: LucideIcons.settings2,
             label: 'Settings',
-            isSelected: _selectedIndex == 3,
+            isSelected: _selectedIndex == 4,
             onTap: () {
-              setState(() => _selectedIndex = 3);
+              setState(() => _selectedIndex = 4);
               if (isDrawer) Navigator.pop(context);
             },
           ),
@@ -471,6 +492,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       case 2:
         return NotesView(globalQuery: globalQuery);
       case 3:
+        return TasksView(globalQuery: globalQuery);
+      case 4:
         return const SettingsView();
       default:
         return const HomeOverview();
@@ -1848,6 +1871,749 @@ String _makeNotePreview(String content) {
   const maxChars = 220;
   if (cleaned.length <= maxChars) return cleaned;
   return '${cleaned.substring(0, maxChars)}...';
+}
+
+class TasksView extends ConsumerStatefulWidget {
+  final String globalQuery;
+  const TasksView({super.key, this.globalQuery = ''});
+
+  @override
+  ConsumerState<TasksView> createState() => _TasksViewState();
+
+  static void showAddTaskDialog(BuildContext context, WidgetRef ref,
+      {TaskItem? existing}) {
+    final id = existing?.id ?? generateTaskId();
+    final titleC = TextEditingController(text: existing?.title ?? '');
+    final notesC = TextEditingController(text: existing?.notes ?? '');
+    var isImportant = existing?.isImportant ?? false;
+    DateTime? dueAt = existing?.dueAt;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setLocal) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          title: Text(existing == null ? 'Nueva Tarea' : 'Editar Tarea'),
+          content: SizedBox(
+            width: 520,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleC,
+                  decoration: const InputDecoration(labelText: 'Título'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: notesC,
+                  maxLines: 4,
+                  decoration: const InputDecoration(labelText: 'Notas'),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    IconButton(
+                      tooltip: 'Importante',
+                      onPressed: () =>
+                          setLocal(() => isImportant = !isImportant),
+                      icon: Icon(
+                        isImportant ? LucideIcons.star : LucideIcons.starOff,
+                        size: 18,
+                        color: isImportant
+                            ? const Color(0xFFF59E0B)
+                            : Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.6),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2100),
+                            initialDate: dueAt ?? DateTime.now(),
+                          );
+                          if (picked != null) {
+                            setLocal(() => dueAt = DateTime(
+                                  picked.year,
+                                  picked.month,
+                                  picked.day,
+                                ));
+                          }
+                        },
+                        icon: const Icon(LucideIcons.calendar, size: 14),
+                        label: Text(
+                          dueAt == null
+                              ? 'Agregar fecha límite'
+                              : 'Vence: ${DateFormat('dd/MM/yyyy').format(dueAt!)}',
+                        ),
+                      ),
+                    ),
+                    if (dueAt != null) ...[
+                      const SizedBox(width: 8),
+                      IconButton(
+                        tooltip: 'Quitar fecha',
+                        onPressed: () => setLocal(() => dueAt = null),
+                        icon: const Icon(LucideIcons.x, size: 16),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final now = DateTime.now();
+                if (existing == null) {
+                  ref.read(taskProvider.notifier).addTask(
+                        TaskItem(
+                          id: id,
+                          title: titleC.text,
+                          isCompleted: false,
+                          isImportant: isImportant,
+                          createdAt: now,
+                          updatedAt: now,
+                          dueAt: dueAt,
+                          notes: notesC.text,
+                          steps: const [],
+                        ),
+                      );
+                } else {
+                  ref.read(taskProvider.notifier).updateTask(
+                        existing.copyWith(
+                          title: titleC.text,
+                          notes: notesC.text,
+                          dueAt: dueAt,
+                          isImportant: isImportant,
+                          updatedAt: now,
+                        ),
+                      );
+                }
+                Navigator.pop(context);
+              },
+              child: const Text('Guardar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+enum _TaskFilter { all, today, planned, important, completed }
+
+class _TasksViewState extends ConsumerState<TasksView> {
+  TaskItem? _selected;
+  _TaskFilter _filter = _TaskFilter.all;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppTheme.darkBg : AppTheme.stBg;
+    final listBg = isDark ? AppTheme.darkSurface : AppTheme.stSurfaceLow;
+    final contentBg = isDark ? AppTheme.darkBg : AppTheme.stSurface;
+    final textPrimary = isDark ? AppTheme.darkOnSurface : AppTheme.stOnSurface;
+    final textSecondary =
+        isDark ? AppTheme.darkOnSurfaceVariant : AppTheme.stOnSurfaceVariant;
+    final divider = (isDark ? AppTheme.darkOutlineVariant : AppTheme.stOutlineVariant)
+        .withValues(alpha: 0.10);
+
+    final raw = ref.watch(taskProvider);
+    final q = widget.globalQuery.trim().toLowerCase();
+
+    final filteredByQuery = q.isEmpty
+        ? raw
+        : raw.where((t) {
+            return t.title.toLowerCase().contains(q) ||
+                t.notes.toLowerCase().contains(q);
+          }).toList();
+
+    final today = DateTime.now();
+    bool isSameDay(DateTime a, DateTime b) =>
+        a.year == b.year && a.month == b.month && a.day == b.day;
+
+    final filtered = switch (_filter) {
+      _TaskFilter.all => filteredByQuery,
+      _TaskFilter.today => filteredByQuery
+          .where((t) => t.dueAt != null && isSameDay(t.dueAt!, today))
+          .toList(),
+      _TaskFilter.planned =>
+        filteredByQuery.where((t) => t.dueAt != null).toList(),
+      _TaskFilter.important =>
+        filteredByQuery.where((t) => t.isImportant).toList(),
+      _TaskFilter.completed =>
+        filteredByQuery.where((t) => t.isCompleted).toList(),
+    };
+
+    final tasks = [...filtered]
+      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+
+    if (_selected == null && tasks.isNotEmpty) {
+      _selected = tasks.first;
+    } else if (_selected != null &&
+        tasks.isNotEmpty &&
+        !tasks.any((t) => t.id == _selected!.id)) {
+      _selected = tasks.first;
+    }
+    if (tasks.isEmpty) _selected = null;
+
+    return Container(
+      color: bg,
+      child: Row(
+        children: [
+          Container(
+            width: 340,
+            color: listBg,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Row(
+                    children: [
+                      Text(
+                        'TASKS',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.5,
+                          color: textSecondary,
+                        ),
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () => TasksView.showAddTaskDialog(context, ref),
+                        child: Icon(LucideIcons.plus, size: 16, color: textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _TaskFilterChip(
+                        label: 'All',
+                        isSelected: _filter == _TaskFilter.all,
+                        onTap: () => setState(() => _filter = _TaskFilter.all),
+                      ),
+                      _TaskFilterChip(
+                        label: 'Today',
+                        isSelected: _filter == _TaskFilter.today,
+                        onTap: () => setState(() => _filter = _TaskFilter.today),
+                      ),
+                      _TaskFilterChip(
+                        label: 'Planned',
+                        isSelected: _filter == _TaskFilter.planned,
+                        onTap: () => setState(() => _filter = _TaskFilter.planned),
+                      ),
+                      _TaskFilterChip(
+                        label: 'Important',
+                        isSelected: _filter == _TaskFilter.important,
+                        onTap: () => setState(() => _filter = _TaskFilter.important),
+                      ),
+                      _TaskFilterChip(
+                        label: 'Completed',
+                        isSelected: _filter == _TaskFilter.completed,
+                        onTap: () => setState(() => _filter = _TaskFilter.completed),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(height: 1, color: divider),
+                Expanded(
+                  child: tasks.isEmpty
+                      ? Center(
+                          child: Text(
+                            q.isEmpty ? 'No hay tareas' : 'Sin resultados',
+                            style: TextStyle(fontSize: 13, color: textSecondary),
+                          ),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(8),
+                          itemCount: tasks.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 2),
+                          itemBuilder: (ctx, i) {
+                            final task = tasks[i];
+                            final isActive = _selected?.id == task.id;
+                            return GestureDetector(
+                              onTap: () => setState(() => _selected = task),
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: isActive
+                                      ? (isDark
+                                          ? AppTheme.darkSurfaceLow
+                                          : AppTheme.stSurface)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () {
+                                        ref.read(taskProvider.notifier).updateTask(
+                                              task.copyWith(
+                                                isCompleted: !task.isCompleted,
+                                                updatedAt: DateTime.now(),
+                                              ),
+                                            );
+                                      },
+                                      child: Icon(
+                                        task.isCompleted
+                                            ? LucideIcons.checkCircle2
+                                            : LucideIcons.circle,
+                                        size: 16,
+                                        color: task.isCompleted
+                                            ? const Color(0xFF22C55E)
+                                            : textSecondary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  task.title,
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: textPrimary.withValues(
+                                                      alpha: task.isCompleted ? 0.5 : 1,
+                                                    ),
+                                                    decoration: task.isCompleted
+                                                        ? TextDecoration.lineThrough
+                                                        : TextDecoration.none,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              if (task.isImportant)
+                                                const Padding(
+                                                  padding: EdgeInsets.only(left: 8.0),
+                                                  child: Icon(
+                                                    LucideIcons.star,
+                                                    size: 14,
+                                                    color: Color(0xFFF59E0B),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                          if (task.dueAt != null)
+                                            Padding(
+                                              padding: const EdgeInsets.only(top: 4),
+                                              child: Text(
+                                                'Vence: ${DateFormat('dd/MM').format(task.dueAt!)}',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: textSecondary,
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Container(
+              color: contentBg,
+              child: _selected == null
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(LucideIcons.checkCircle2,
+                              size: 32, color: textSecondary.withValues(alpha: 0.4)),
+                          const SizedBox(height: 12),
+                          Text('Selecciona una tarea',
+                              style: TextStyle(fontSize: 14, color: textSecondary)),
+                        ],
+                      ),
+                    )
+                  : _TaskContentPanel(
+                      key: ValueKey(_selected!.id),
+                      task: _selected!,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TaskFilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  const _TaskFilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isSelected
+        ? (isDark ? const Color(0xFF2C2C2E) : AppTheme.stSurface)
+        : Colors.transparent;
+    final border = (isDark ? Colors.white10 : Colors.black.withOpacity(0.06));
+    final fg = isSelected
+        ? (isDark ? Colors.white : AppTheme.stOnSurface)
+        : (isDark ? Colors.white54 : AppTheme.stOnSurfaceVariant);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: border),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: fg),
+        ),
+      ),
+    );
+  }
+}
+
+class _TaskContentPanel extends ConsumerWidget {
+  final TaskItem task;
+  final Color textPrimary;
+  final Color textSecondary;
+  const _TaskContentPanel({
+    super.key,
+    required this.task,
+    required this.textPrimary,
+    required this.textSecondary,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final borderColor = (isDark ? Colors.white10 : Colors.black.withOpacity(0.07));
+
+    final completedSteps = task.steps.where((s) => s.isCompleted).length;
+    final totalSteps = task.steps.length;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(48, 48, 48, 80),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () => ref.read(taskProvider.notifier).updateTask(
+                      task.copyWith(
+                        isCompleted: !task.isCompleted,
+                        updatedAt: DateTime.now(),
+                      ),
+                    ),
+                child: Icon(
+                  task.isCompleted ? LucideIcons.checkCircle2 : LucideIcons.circle,
+                  size: 18,
+                  color: task.isCompleted
+                      ? const Color(0xFF22C55E)
+                      : textSecondary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  task.title,
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                    color: textPrimary.withValues(alpha: task.isCompleted ? 0.55 : 1),
+                    decoration:
+                        task.isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Importante',
+                onPressed: () => ref.read(taskProvider.notifier).updateTask(
+                      task.copyWith(
+                        isImportant: !task.isImportant,
+                        updatedAt: DateTime.now(),
+                      ),
+                    ),
+                icon: Icon(
+                  task.isImportant ? LucideIcons.star : LucideIcons.starOff,
+                  size: 18,
+                  color: task.isImportant
+                      ? const Color(0xFFF59E0B)
+                      : textSecondary,
+                ),
+              ),
+              IconButton(
+                tooltip: 'Editar',
+                onPressed: () => TasksView.showAddTaskDialog(context, ref, existing: task),
+                icon: const Icon(LucideIcons.edit2, size: 16),
+              ),
+              IconButton(
+                tooltip: 'Eliminar',
+                onPressed: () => ref.read(taskProvider.notifier).deleteTask(task.id),
+                icon: const Icon(LucideIcons.trash2, size: 16, color: Colors.redAccent),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _TaskMetaPill(
+                icon: LucideIcons.clock,
+                label: 'Actualizada: ${DateFormat('d MMM yyyy').format(task.updatedAt)}',
+                borderColor: borderColor,
+                fg: textSecondary,
+              ),
+              _TaskMetaPill(
+                icon: LucideIcons.calendar,
+                label: task.dueAt == null
+                    ? 'Sin fecha límite'
+                    : 'Vence: ${DateFormat('d MMM yyyy').format(task.dueAt!)}',
+                borderColor: borderColor,
+                fg: textSecondary,
+              ),
+              _TaskMetaPill(
+                icon: LucideIcons.listChecks,
+                label: 'Pasos: $completedSteps/$totalSteps',
+                borderColor: borderColor,
+                fg: textSecondary,
+              ),
+            ],
+          ),
+          const SizedBox(height: 22),
+          Divider(color: borderColor, height: 1),
+          const SizedBox(height: 18),
+          if (task.notes.trim().isNotEmpty) ...[
+            Text(
+              'Notas',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: textSecondary),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              task.notes,
+              style: TextStyle(fontSize: 14, height: 1.6, color: textPrimary.withValues(alpha: 0.9)),
+            ),
+            const SizedBox(height: 18),
+          ],
+          Text(
+            'Pasos',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: textSecondary),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: borderColor),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                for (final step in task.steps)
+                  _TaskStepRow(task: task, step: step),
+                _AddStepRow(task: task),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TaskMetaPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color borderColor;
+  final Color fg;
+  const _TaskMetaPill({
+    required this.icon,
+    required this.label,
+    required this.borderColor,
+    required this.fg,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: borderColor),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: fg),
+          const SizedBox(width: 8),
+          Text(label, style: TextStyle(fontSize: 12, color: fg)),
+        ],
+      ),
+    );
+  }
+}
+
+class _TaskStepRow extends ConsumerWidget {
+  final TaskItem task;
+  final TaskStep step;
+  const _TaskStepRow({required this.task, required this.step});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final textPrimary = Theme.of(context).colorScheme.onSurface;
+    final borderColor =
+        (Theme.of(context).brightness == Brightness.dark ? Colors.white10 : Colors.black.withOpacity(0.07));
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: borderColor)),
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () {
+              final steps = [
+                for (final s in task.steps)
+                  if (s.id == step.id) s.copyWith(isCompleted: !s.isCompleted) else s
+              ];
+              ref.read(taskProvider.notifier).updateTask(
+                    task.copyWith(steps: steps, updatedAt: DateTime.now()),
+                  );
+            },
+            child: Icon(
+              step.isCompleted ? LucideIcons.checkSquare : LucideIcons.square,
+              size: 16,
+              color: step.isCompleted ? const Color(0xFF22C55E) : textPrimary.withValues(alpha: 0.55),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              step.title,
+              style: TextStyle(
+                fontSize: 13,
+                color: textPrimary.withValues(alpha: step.isCompleted ? 0.55 : 0.9),
+                decoration: step.isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
+              ),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Eliminar paso',
+            onPressed: () {
+              final steps = task.steps.where((s) => s.id != step.id).toList();
+              ref.read(taskProvider.notifier).updateTask(
+                    task.copyWith(steps: steps, updatedAt: DateTime.now()),
+                  );
+            },
+            icon: const Icon(LucideIcons.trash2, size: 16),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AddStepRow extends ConsumerStatefulWidget {
+  final TaskItem task;
+  const _AddStepRow({required this.task});
+
+  @override
+  ConsumerState<_AddStepRow> createState() => _AddStepRowState();
+}
+
+class _AddStepRowState extends ConsumerState<_AddStepRow> {
+  final _c = TextEditingController();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  void _add() {
+    final title = _c.text.trim();
+    if (title.isEmpty) return;
+    final steps = [
+      ...widget.task.steps,
+      TaskStep(id: generateTaskId(), title: title, isCompleted: false),
+    ];
+    ref.read(taskProvider.notifier).updateTask(
+          widget.task.copyWith(steps: steps, updatedAt: DateTime.now()),
+        );
+    _c.clear();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final borderColor =
+        (Theme.of(context).brightness == Brightness.dark ? Colors.white10 : Colors.black.withOpacity(0.07));
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: borderColor)),
+      ),
+      child: Row(
+        children: [
+          const Icon(LucideIcons.plus, size: 16),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: _c,
+              onSubmitted: (_) => _add(),
+              decoration: const InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+                hintText: 'Agregar un paso...',
+              ),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Agregar',
+            onPressed: _add,
+            icon: const Icon(LucideIcons.arrowRight, size: 16),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 Future<void> _tryPasteImageIntoNote({

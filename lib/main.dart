@@ -43,6 +43,7 @@ class _BootstrapperState extends State<Bootstrapper> {
       await Hive.openBox('settings');
       await SecurityService.openEncryptedBox('vault');
       await Hive.openBox('notes');
+      await Hive.openBox('tasks');
       
       if (mounted) setState(() => _initialized = true);
     } catch (e) {
