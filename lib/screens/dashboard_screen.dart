@@ -1287,24 +1287,19 @@ class NotesView extends ConsumerStatefulWidget {
             children: [
               TextField(controller: titleC, decoration: const InputDecoration(labelText: 'Título')),
               const SizedBox(height: 16),
-              CallbackShortcuts(
-                bindings: <ShortcutActivator, VoidCallback>{
-                  const SingleActivator(LogicalKeyboardKey.keyV, control: true): () {
-                    unawaited(_tryPasteImageIntoNote(
-                      context: context,
-                      contentController: contentC,
-                      noteId: noteId,
-                    ));
-                  },
-                },
-                child: TextField(
-                  controller: contentC,
-                  maxLines: 6,
-                  decoration: const InputDecoration(
-                    labelText: 'Contenido',
-                    hintText:
-                        'Tip: también puedes pegar imágenes con Ctrl+V',
-                  ),
+              TextField(
+                controller: contentC,
+                maxLines: 6,
+                decoration: const InputDecoration(
+                  labelText: 'Contenido',
+                  hintText: 'Tip: también puedes pegar imágenes con el botón de abajo',
+                ),
+                enableInteractiveSelection: true,
+                toolbarOptions: const ToolbarOptions(
+                  copy: true,
+                  cut: true,
+                  paste: true,
+                  selectAll: true,
                 ),
               ),
               const SizedBox(height: 10),
@@ -1374,11 +1369,25 @@ class NotesView extends ConsumerStatefulWidget {
             child: MarkdownBody(
               data: note.content,
               sizedImageBuilder: _markdownSizedImageBuilder,
+              onTapLink: (text, href, title) async {
+                if (href != null) {
+                  final uri = Uri.tryParse(href);
+                  if (uri != null && await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                }
+              },
               styleSheet: MarkdownStyleSheet(
                 p: TextStyle(
                   fontSize: 13,
                   color: Theme.of(context).colorScheme.onSurface.withOpacity(0.85),
                   height: 1.6,
+                ),
+                // Make links clickable and visible
+                a: TextStyle(
+                  color: Theme.of(context).primaryColor,
+                  decoration: TextDecoration.underline,
+                  decorationColor: Theme.of(context).primaryColor,
                 ),
               ),
             ),
@@ -1672,6 +1681,14 @@ class _NoteContentPanel extends ConsumerWidget {
                 ? '*Sin contenido. Edita la nota para añadir contenido.*'
                 : note.content,
             sizedImageBuilder: _markdownSizedImageBuilder,
+            onTapLink: (text, href, title) async {
+              if (href != null) {
+                final uri = Uri.tryParse(href);
+                if (uri != null && await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                }
+              }
+            },
             styleSheet: MarkdownStyleSheet(
               p: TextStyle(
                   fontSize: 15,
@@ -1707,6 +1724,12 @@ class _NoteContentPanel extends ConsumerWidget {
                   ),
                 ),
                 color: AppTheme.stSurfaceLow,
+              ),
+              // Make links more visible and clickable
+              a: TextStyle(
+                color: AppTheme.stPrimary,
+                decoration: TextDecoration.underline,
+                decorationColor: AppTheme.stPrimary,
               ),
             ),
           ),
