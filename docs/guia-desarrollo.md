@@ -1,6 +1,6 @@
 # Guía de Desarrollo
 
-> Última actualización: 31 de marzo, 2026
+> Última actualización: 31 de March, 2026
 
 Esta guía está dirigida a desarrolladores que quieren contribuir o extender DevVault.
 
