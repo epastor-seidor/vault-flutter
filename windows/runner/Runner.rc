@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "dev_vault" "\0"
+            VALUE "CompanyName", "DevVault" "\0"
+            VALUE "FileDescription", "DevVault - Gestor seguro de credenciales, notas y tareas" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "dev_vault" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
+            VALUE "InternalName", "DevVault" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 DevVault. Todos los derechos reservados." "\0"
             VALUE "OriginalFilename", "dev_vault.exe" "\0"
-            VALUE "ProductName", "dev_vault" "\0"
+            VALUE "ProductName", "DevVault" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

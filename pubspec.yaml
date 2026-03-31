@@ -117,3 +117,12 @@ msix_config:
   logo_path: assets/icon/app_icon.png
   store: false
   install_certificate: true # Generate a self-signed cert for testing
+  capabilities: internetClient
+
+# flutter_launcher_icons configuration
+flutter_launcher_icons:
+  windows:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+    icon_size: 256
+  image_path: "assets/icon/app_icon.png"
