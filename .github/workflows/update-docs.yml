@@ -47,8 +47,11 @@ jobs:
         id: changes
         run: |
           CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD -- lib/ || echo "")
-          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          {
+            echo "changed_files<<ENDOFCHANGES"
+            echo "$CHANGED_FILES"
+            echo "ENDOFCHANGES"
+          } >> $GITHUB_OUTPUT
           echo ""
           echo "Archivos cambiados:"
           echo "$CHANGED_FILES"
