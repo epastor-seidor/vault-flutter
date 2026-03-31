@@ -17,6 +17,8 @@ import 'package:dev_vault/models/task_item.dart';
 import 'package:dev_vault/providers/lock_provider.dart';
 import 'package:dev_vault/providers/security_log_provider.dart';
 import 'package:dev_vault/widgets/credential_editor_panel.dart';
+import 'package:dev_vault/widgets/note_properties_panel.dart';
+import 'package:dev_vault/widgets/note_enhanced_view.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter/services.dart';
@@ -1925,6 +1927,101 @@ class NotesView extends ConsumerStatefulWidget {
 
 class _NotesViewState extends ConsumerState<NotesView> {
   Note? _selectedNote;
+  bool _isEditing = false;
+  bool _showList = true;
+  bool _showProperties = false;
+  Timer? _autoSaveTimer;
+  final _editContentC = TextEditingController();
+
+  @override
+  void dispose() {
+    _autoSaveTimer?.cancel();
+    _editContentC.dispose();
+    super.dispose();
+  }
+
+  void _startAutoSave(Note note) {
+    _autoSaveTimer?.cancel();
+    _autoSaveTimer = Timer(const Duration(seconds: 1), () {
+      ref
+          .read(noteProvider.notifier)
+          .updateNote(
+            note.copyWith(
+              content: _editContentC.text,
+              updatedAt: DateTime.now(),
+            ),
+          );
+    });
+  }
+
+  void _saveAndSwitch(Note note) {
+    _autoSaveTimer?.cancel();
+    if (_editContentC.text != note.content) {
+      ref
+          .read(noteProvider.notifier)
+          .updateNote(
+            note.copyWith(
+              content: _editContentC.text,
+              updatedAt: DateTime.now(),
+            ),
+          );
+    }
+  }
+
+  String _relativeTime(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'Ahora';
+    if (diff.inMinutes < 60) return 'Hace ${diff.inMinutes} min';
+    if (diff.inHours < 24) return 'Hace ${diff.inHours}h';
+    if (diff.inDays < 7) return 'Hace ${diff.inDays}d';
+    return '${dt.day} ${_monthName(dt.month)}';
+  }
+
+  String _monthName(int m) {
+    const months = [
+      'Ene',
+      'Feb',
+      'Mar',
+      'Abr',
+      'May',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dic',
+    ];
+    return months[m - 1];
+  }
+
+  bool _hasImages(String content) => content.contains('![');
+  bool _hasCode(String content) =>
+      content.contains('```') || content.contains('`');
+
+  void _insertMarkdown(String before, [String after = '']) {
+    final c = _editContentC;
+    final sel = c.selection;
+    final text = c.text;
+    if (sel.isValid && sel.start != sel.end) {
+      final selected = text.substring(sel.start, sel.end);
+      final newText = text.replaceRange(
+        sel.start,
+        sel.end,
+        '$before$selected$after',
+      );
+      c.text = newText;
+      c.selection = TextSelection.collapsed(
+        offset: sel.start + before.length + selected.length + after.length,
+      );
+    } else {
+      final pos = sel.isValid ? sel.start : text.length;
+      final newText =
+          text.substring(0, pos) + '$before$after' + text.substring(pos);
+      c.text = newText;
+      c.selection = TextSelection.collapsed(offset: pos + before.length);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1978,15 +2075,40 @@ class _NotesViewState extends ConsumerState<NotesView> {
                   child: Row(
                     children: [
                       Text(
-                        'NOTAS RECIENTES',
-                        style: TextStyle(
+                        'NOTAS',
+                        style: GoogleFonts.inter(
                           fontSize: 9,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                           letterSpacing: 1.5,
                           color: textSecondary,
                         ),
                       ),
                       const Spacer(),
+                      // Toggle properties panel
+                      if (!_showProperties)
+                        IconButton(
+                          icon: const Icon(LucideIcons.panelRight, size: 16),
+                          onPressed: () =>
+                              setState(() => _showProperties = true),
+                          tooltip: 'Mostrar propiedades',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          color: textSecondary,
+                        ),
+                      if (_showProperties)
+                        IconButton(
+                          icon: const Icon(
+                            LucideIcons.panelRightClose,
+                            size: 16,
+                          ),
+                          onPressed: () =>
+                              setState(() => _showProperties = false),
+                          tooltip: 'Ocultar propiedades',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          color: textSecondary,
+                        ),
+                      const SizedBox(width: 8),
                       GestureDetector(
                         onTap: () => NotesView.showAddNoteDialog(context, ref),
                         child: Icon(
@@ -1999,7 +2121,7 @@ class _NotesViewState extends ConsumerState<NotesView> {
                   ),
                 ),
                 Divider(height: 1, color: divider),
-                // Note list
+                // Note list with enhanced items
                 Expanded(
                   child: notes.isEmpty
                       ? Center(
@@ -2019,71 +2141,30 @@ class _NotesViewState extends ConsumerState<NotesView> {
                           itemBuilder: (ctx, i) {
                             final note = notes[i];
                             final isActive = _selectedNote?.id == note.id;
-                            return GestureDetector(
-                              onTap: () => setState(() => _selectedNote = note),
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: isActive
-                                      ? (isDark
-                                            ? AppTheme.darkSurfaceLow
-                                            : AppTheme.stSurface)
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(8),
-                                  boxShadow: isActive
-                                      ? [
-                                          BoxShadow(
-                                            color: const Color(
-                                              0xFF2D3432,
-                                            ).withValues(alpha: 0.05),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ]
-                                      : null,
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          LucideIcons.fileText,
-                                          size: 13,
-                                          color: isActive
-                                              ? AppTheme.stPrimary
-                                              : textSecondary,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            note.title,
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: isActive
-                                                  ? FontWeight.w600
-                                                  : FontWeight.w500,
-                                              color: textPrimary,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      _makeNotePreview(note.content),
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: textSecondary,
-                                        height: 1.4,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
+                            return EnhancedNoteListItem(
+                              key: ValueKey(note.id),
+                              note: note,
+                              isActive: isActive,
+                              isDark: isDark,
+                              onTap: () {
+                                _saveAndSwitch(_selectedNote!);
+                                setState(() {
+                                  _selectedNote = note;
+                                  _isEditing = false;
+                                  _editContentC.text = note.content;
+                                });
+                              },
+                              onEdit: () => NotesView.showAddNoteDialog(
+                                context,
+                                ref,
+                                existingNote: note,
                               ),
+                              onDelete: () => ref
+                                  .read(noteProvider.notifier)
+                                  .deleteNote(note.id),
+                              relativeTime: _relativeTime(note.updatedAt),
+                              hasImages: _hasImages(note.content),
+                              hasCode: _hasCode(note.content),
                             );
                           },
                         ),
@@ -2092,7 +2173,7 @@ class _NotesViewState extends ConsumerState<NotesView> {
             ),
           ),
 
-          // ── Content Canvas (right) ───────────────────────────
+          // ── Content Canvas (center) ───────────────────────────
           Expanded(
             child: Container(
               color: contentBg,
@@ -2117,22 +2198,47 @@ class _NotesViewState extends ConsumerState<NotesView> {
                         ],
                       ),
                     )
-                  : _NoteContentPanel(
+                  : EnhancedNoteContent(
                       key: ValueKey(_selectedNote!.id),
                       note: _selectedNote!,
+                      isEditing: _isEditing,
+                      editController: _editContentC,
                       isDark: isDark,
                       textPrimary: textPrimary,
                       textSecondary: textSecondary,
+                      onToggleEdit: () {
+                        setState(() {
+                          if (_isEditing) {
+                            _saveAndSwitch(_selectedNote!);
+                            _isEditing = false;
+                          } else {
+                            _editContentC.text = _selectedNote!.content;
+                            _isEditing = true;
+                          }
+                        });
+                      },
+                      onAutoSave: () => _startAutoSave(_selectedNote!),
+                      onInsertMarkdown: _insertMarkdown,
                     ),
             ),
           ),
+
+          // ── Properties Panel (right) ─────────────────────────
+          if (_showProperties)
+            NotePropertiesPanel(
+              key: ValueKey('props-${_selectedNote!.id}'),
+              note: _selectedNote!,
+              isDark: isDark,
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+            ),
         ],
       ),
     );
   }
 }
 
-// Two-panel note content viewer (right panel of NotesView)
+// Legacy: kept for backward compatibility with dialog-based note creation
 class _NoteContentPanel extends ConsumerWidget {
   final Note note;
   final bool isDark;
