@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -882,6 +883,8 @@ class _VaultViewState extends ConsumerState<VaultView> {
   String _selectedCategory = 'Todas';
   String _sortMode = 'Fecha';
   bool _showFavoritesOnly = false;
+  bool _batchMode = false;
+  final Set<String> _selectedItems = {};
 
   String _relativeTime(DateTime dt) {
     final diff = DateTime.now().difference(dt);
@@ -890,6 +893,107 @@ class _VaultViewState extends ConsumerState<VaultView> {
     if (diff.inHours < 24) return 'Hace ${diff.inHours}h';
     if (diff.inDays < 7) return 'Hace ${diff.inDays}d';
     return '${dt.day}/${dt.month}/${dt.year}';
+  }
+
+  IconData _getCategoryIcon(String? category) {
+    switch (category?.toLowerCase()) {
+      case 'login':
+        return LucideIcons.logIn;
+      case 'api key':
+        return LucideIcons.key;
+      case 'database':
+        return LucideIcons.database;
+      case 'email':
+        return LucideIcons.mail;
+      default:
+        return LucideIcons.shield;
+    }
+  }
+
+  int _passwordAgeDays(String? password, DateTime updatedAt) {
+    if (password == null || password.isEmpty) return 0;
+    return DateTime.now().difference(updatedAt).inDays;
+  }
+
+  void _exportCredentials(List<VaultItem> items) async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File(
+        '${dir.path}/devvault_export_${DateTime.now().millisecondsSinceEpoch}.json',
+      );
+      final data = items
+          .map(
+            (i) => {
+              'title': i.title,
+              'url': i.url,
+              'username': i.username,
+              'password': i.password,
+              'category': i.category,
+              'notes': i.notes,
+              'createdAt': i.createdAt.toIso8601String(),
+              'updatedAt': i.updatedAt.toIso8601String(),
+            },
+          )
+          .toList();
+      await file.writeAsString(jsonEncode(data));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Exportado: ${file.path}',
+              style: GoogleFonts.inter(fontSize: 12),
+            ),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al exportar: $e'),
+            backgroundColor: const Color(0xFF9f403d),
+          ),
+        );
+      }
+    }
+  }
+
+  void _deleteSelected() {
+    if (_selectedItems.isEmpty) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Eliminar ${_selectedItems.length} credenciales'),
+        content: Text('¿Estás seguro? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              for (final id in _selectedItems) {
+                ref.read(vaultProvider.notifier).deleteItem(id);
+              }
+              setState(() {
+                _selectedItems.clear();
+                _batchMode = false;
+              });
+              Navigator.pop(ctx);
+            },
+            child: const Text(
+              'Eliminar',
+              style: TextStyle(color: Color(0xFF9f403d)),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -990,42 +1094,71 @@ class _VaultViewState extends ConsumerState<VaultView> {
                         ),
                       ],
                     ),
-                    // View toggle
-                    Container(
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppTheme.darkSurfaceLow
-                            : AppTheme.stSurfaceLow,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
+                    // View toggle + actions
+                    Row(
+                      children: [
+                        // Batch mode toggle
+                        if (items.isNotEmpty)
                           IconButton(
                             icon: Icon(
-                              LucideIcons.list,
+                              _batchMode
+                                  ? LucideIcons.checkSquare
+                                  : LucideIcons.square,
                               size: 16,
-                              color: !_showGridView
-                                  ? textPrimary
-                                  : textSecondary,
+                              color: _batchMode ? textPrimary : textSecondary,
                             ),
-                            onPressed: () =>
-                                setState(() => _showGridView = false),
-                            tooltip: 'Lista',
+                            onPressed: () => setState(() {
+                              _batchMode = !_batchMode;
+                              if (!_batchMode) _selectedItems.clear();
+                            }),
+                            tooltip: 'Selección múltiple',
                           ),
+                        // Export
+                        if (items.isNotEmpty)
                           IconButton(
-                            icon: Icon(
-                              LucideIcons.layoutGrid,
-                              size: 16,
-                              color: _showGridView
-                                  ? textPrimary
-                                  : textSecondary,
-                            ),
-                            onPressed: () =>
-                                setState(() => _showGridView = true),
-                            tooltip: 'Cuadrícula',
+                            icon: const Icon(LucideIcons.download, size: 16),
+                            onPressed: () => _exportCredentials(items),
+                            tooltip: 'Exportar JSON',
+                            color: textSecondary,
                           ),
-                        ],
-                      ),
+                        const SizedBox(width: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? AppTheme.darkSurfaceLow
+                                : AppTheme.stSurfaceLow,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  LucideIcons.list,
+                                  size: 16,
+                                  color: !_showGridView
+                                      ? textPrimary
+                                      : textSecondary,
+                                ),
+                                onPressed: () =>
+                                    setState(() => _showGridView = false),
+                                tooltip: 'Lista',
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  LucideIcons.layoutGrid,
+                                  size: 16,
+                                  color: _showGridView
+                                      ? textPrimary
+                                      : textSecondary,
+                                ),
+                                onPressed: () =>
+                                    setState(() => _showGridView = true),
+                                tooltip: 'Cuadrícula',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -1257,6 +1390,61 @@ class _VaultViewState extends ConsumerState<VaultView> {
                   ),
                   const SizedBox(height: 16),
                 ],
+                // Batch action bar
+                if (_batchMode && _selectedItems.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: const Color(0xFFF59E0B).withValues(alpha: 0.30),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          '${_selectedItems.length} seleccionada${_selectedItems.length > 1 ? 's' : ''}',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
+                          ),
+                        ),
+                        const Spacer(),
+                        TextButton.icon(
+                          onPressed: _deleteSelected,
+                          icon: const Icon(
+                            LucideIcons.trash2,
+                            size: 16,
+                            color: Color(0xFF9f403d),
+                          ),
+                          label: Text(
+                            'Eliminar',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: const Color(0xFF9f403d),
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => setState(() {
+                            _selectedItems.clear();
+                            _batchMode = false;
+                          }),
+                          child: Text(
+                            'Cancelar',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 if (_showGridView)
                   _buildGridView(
                     items,
@@ -1360,6 +1548,9 @@ class _VaultViewState extends ConsumerState<VaultView> {
     Color cardBg,
     Color borderColor,
   ) {
+    if (items.isEmpty) {
+      return _buildEmptyState(textPrimary, textSecondary);
+    }
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -1378,6 +1569,95 @@ class _VaultViewState extends ConsumerState<VaultView> {
         textSecondary: textSecondary,
         cardBg: cardBg,
         borderColor: borderColor,
+        getCategoryIcon: _getCategoryIcon,
+        isBatchMode: _batchMode,
+        isSelected: _selectedItems.contains(items[i].id),
+        onToggleSelect: () {
+          setState(() {
+            if (_selectedItems.contains(items[i].id)) {
+              _selectedItems.remove(items[i].id);
+            } else {
+              _selectedItems.add(items[i].id);
+            }
+          });
+        },
+        onCopyPassword: () {
+          if (items[i].password?.isNotEmpty == true) {
+            Clipboard.setData(ClipboardData(text: items[i].password!));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Contraseña copiada',
+                  style: GoogleFonts.inter(fontSize: 12),
+                ),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                duration: const Duration(seconds: 1),
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(Color textPrimary, Color textSecondary) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 80),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppTheme.stSurfaceContainer,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              LucideIcons.shieldOff,
+              size: 36,
+              color: textSecondary.withValues(alpha: 0.4),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'No hay credenciales',
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Crea tu primera credencial para comenzar',
+            style: GoogleFonts.inter(fontSize: 13, color: textSecondary),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            onPressed: () => VaultView.showAddDialog(context, ref),
+            icon: const Icon(LucideIcons.plus, size: 16),
+            label: Text(
+              'Crear primera credencial',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.stPrimary,
+              foregroundColor: AppTheme.stOnPrimary,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1397,6 +1677,7 @@ class _VaultViewState extends ConsumerState<VaultView> {
       ),
       child: Column(
         children: [
+          // Header row - widths must match data row exactly
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
@@ -1404,60 +1685,65 @@ class _VaultViewState extends ConsumerState<VaultView> {
             ),
             child: Row(
               children: [
+                if (_batchMode) const SizedBox(width: 26),
                 SizedBox(
                   width: 220,
                   child: Text(
                     'SITIO / SERVICIO',
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       fontSize: 10,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                       letterSpacing: 1.0,
                       color: textSecondary,
                     ),
                   ),
                 ),
+                const SizedBox(width: 16),
                 SizedBox(
                   width: 180,
                   child: Text(
                     'USUARIO',
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       fontSize: 10,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                       letterSpacing: 1.0,
                       color: textSecondary,
                     ),
                   ),
                 ),
-                SizedBox(
-                  width: 150,
-                  child: Text(
-                    'CONTRASEÑA',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.0,
-                      color: textSecondary,
-                    ),
-                  ),
-                ),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Text(
-                    'URL',
-                    style: TextStyle(
+                    'CONTRASEÑA',
+                    style: GoogleFonts.inter(
                       fontSize: 10,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                       letterSpacing: 1.0,
                       color: textSecondary,
                     ),
                   ),
                 ),
+                const SizedBox(width: 16),
+                SizedBox(
+                  width: 90,
+                  child: Text(
+                    'MODIFICADA',
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.0,
+                      color: textSecondary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
                 SizedBox(
                   width: 80,
                   child: Text(
                     'ACCIONES',
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       fontSize: 10,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                       letterSpacing: 1.0,
                       color: textSecondary,
                     ),
@@ -1467,15 +1753,7 @@ class _VaultViewState extends ConsumerState<VaultView> {
             ),
           ),
           if (items.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(48),
-              child: Center(
-                child: Text(
-                  'No hay credenciales guardadas',
-                  style: TextStyle(color: textSecondary),
-                ),
-              ),
-            )
+            _buildEmptyState(textPrimary, textSecondary)
           else
             ListView.separated(
               shrinkWrap: true,
@@ -1488,21 +1766,29 @@ class _VaultViewState extends ConsumerState<VaultView> {
                 item: items[i],
                 compact: widget.isCompact,
                 onEdit: () => setState(() => _editingItem = items[i]),
+                getCategoryIcon: _getCategoryIcon,
+                isBatchMode: _batchMode,
+                isSelected: _selectedItems.contains(items[i].id),
+                onToggleSelect: () {
+                  setState(() {
+                    if (_selectedItems.contains(items[i].id)) {
+                      _selectedItems.remove(items[i].id);
+                    } else {
+                      _selectedItems.add(items[i].id);
+                    }
+                  });
+                },
               ),
             ),
           if (items.isNotEmpty)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
                 border: Border(top: BorderSide(color: borderColor)),
               ),
-              child: Row(
-                children: [
-                  Text(
-                    'Mostrando ${items.length} de ${items.length} entradas',
-                    style: TextStyle(fontSize: 12, color: textSecondary),
-                  ),
-                ],
+              child: Text(
+                '${items.length} credencial${items.length != 1 ? 'es' : ''}',
+                style: GoogleFonts.inter(fontSize: 11, color: textSecondary),
               ),
             ),
         ],
@@ -1604,6 +1890,11 @@ class _VaultGridCard extends ConsumerWidget {
   final Color textSecondary;
   final Color cardBg;
   final Color borderColor;
+  final IconData Function(String?) getCategoryIcon;
+  final bool isBatchMode;
+  final bool isSelected;
+  final VoidCallback onToggleSelect;
+  final VoidCallback onCopyPassword;
 
   const _VaultGridCard({
     super.key,
@@ -1613,6 +1904,11 @@ class _VaultGridCard extends ConsumerWidget {
     required this.textSecondary,
     required this.cardBg,
     required this.borderColor,
+    required this.getCategoryIcon,
+    this.isBatchMode = false,
+    this.isSelected = false,
+    required this.onToggleSelect,
+    required this.onCopyPassword,
   });
 
   @override
@@ -1620,18 +1916,24 @@ class _VaultGridCard extends ConsumerWidget {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
-        onTap: onTap,
+        onTap: isBatchMode ? onToggleSelect : onTap,
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: cardBg,
+            color: isSelected
+                ? AppTheme.stPrimary.withValues(alpha: 0.08)
+                : cardBg,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: borderColor.withValues(alpha: 0.10)),
+            border: Border.all(
+              color: isSelected
+                  ? AppTheme.stPrimary.withValues(alpha: 0.4)
+                  : borderColor.withValues(alpha: 0.10),
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+                color: Colors.black.withValues(alpha: isSelected ? 0.08 : 0.04),
+                blurRadius: isSelected ? 12 : 8,
+                offset: Offset(0, isSelected ? 4 : 2),
               ),
             ],
           ),
@@ -1641,22 +1943,34 @@ class _VaultGridCard extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppTheme.stSurfaceContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      item.title.isEmpty ? '?' : item.title[0].toUpperCase(),
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.stPrimary,
+                  Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: AppTheme.stSurfaceContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          getCategoryIcon(item.category),
+                          size: 18,
+                          color: AppTheme.stPrimary,
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      if (isBatchMode)
+                        Icon(
+                          isSelected
+                              ? LucideIcons.checkSquare
+                              : LucideIcons.square,
+                          size: 18,
+                          color: isSelected
+                              ? AppTheme.stPrimary
+                              : textSecondary,
+                        ),
+                    ],
                   ),
                   GestureDetector(
                     onTap: () {
@@ -1769,11 +2083,20 @@ class _VaultCard extends ConsumerStatefulWidget {
   final VaultItem item;
   final bool compact;
   final VoidCallback? onEdit;
+  final IconData Function(String?) getCategoryIcon;
+  final bool isBatchMode;
+  final bool isSelected;
+  final VoidCallback onToggleSelect;
+
   const _VaultCard({
     super.key,
     required this.item,
     this.compact = false,
     this.onEdit,
+    required this.getCategoryIcon,
+    this.isBatchMode = false,
+    this.isSelected = false,
+    required this.onToggleSelect,
   });
   @override
   ConsumerState<_VaultCard> createState() => _VaultCardState();
@@ -1781,6 +2104,42 @@ class _VaultCard extends ConsumerStatefulWidget {
 
 class _VaultCardState extends ConsumerState<_VaultCard> {
   bool _showPassword = false;
+
+  void _confirmDelete(VaultItem item) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Eliminar "${item.title}"'),
+        content: Text('¿Estás seguro? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              ref.read(vaultProvider.notifier).deleteItem(item.id);
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('"${item.title}" eliminada'),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            child: const Text(
+              'Eliminar',
+              style: TextStyle(color: Color(0xFF9f403d)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1813,21 +2172,30 @@ class _VaultCardState extends ConsumerState<_VaultCard> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(LucideIcons.edit2, size: 16),
+                    icon: const Icon(LucideIcons.edit2, size: 14),
                     onPressed: () => VaultView.showAddDialog(
                       context,
                       ref,
                       existingItem: item,
                     ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 28,
+                      minHeight: 28,
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(
                       LucideIcons.trash2,
-                      size: 16,
+                      size: 14,
                       color: Color(0xFFE55D5D),
                     ),
-                    onPressed: () =>
-                        ref.read(vaultProvider.notifier).deleteItem(item.id),
+                    onPressed: () => _confirmDelete(item),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 28,
+                      minHeight: 28,
+                    ),
                   ),
                 ],
               ),
@@ -1876,36 +2244,51 @@ class _VaultCardState extends ConsumerState<_VaultCard> {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
+          // Batch checkbox
+          if (widget.isBatchMode) ...[
+            GestureDetector(
+              onTap: widget.onToggleSelect,
+              child: Icon(
+                widget.isSelected
+                    ? LucideIcons.checkSquare
+                    : LucideIcons.square,
+                size: 16,
+                color: widget.isSelected
+                    ? AppTheme.stPrimary
+                    : const Color(0xFFADB3B0),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+          // Sitio - 220px
           SizedBox(
-            width: 270,
+            width: 220,
             child: Row(
               children: [
                 Container(
-                  width: 30,
-                  height: 30,
+                  width: 28,
+                  height: 28,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor.withOpacity(0.12),
+                    color: AppTheme.stSurfaceContainer,
                     shape: BoxShape.circle,
                   ),
-                  child: Text(
-                    item.title.isEmpty ? '?' : item.title[0].toUpperCase(),
-                    style: TextStyle(
-                      color: Theme.of(context).primaryColor,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: Icon(
+                    widget.getCategoryIcon(item.category),
+                    size: 13,
+                    color: AppTheme.stPrimary,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     item.title,
-                    style: const TextStyle(
+                    style: GoogleFonts.inter(
                       fontWeight: FontWeight.w600,
-                      fontSize: 14,
+                      fontSize: 13,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1913,14 +2296,19 @@ class _VaultCardState extends ConsumerState<_VaultCard> {
               ],
             ),
           ),
+          const SizedBox(width: 16),
+          // Usuario - 180px
           SizedBox(
-            width: 230,
-            child: SelectableText(
+            width: 180,
+            child: Text(
               username,
               maxLines: 1,
-              style: Theme.of(context).textTheme.bodyMedium,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(fontSize: 12),
             ),
           ),
+          const SizedBox(width: 16),
+          // Contraseña - Expanded
           Expanded(
             child: Row(
               children: [
@@ -1930,7 +2318,7 @@ class _VaultCardState extends ConsumerState<_VaultCard> {
                     style: const TextStyle(
                       fontFamily: 'Courier',
                       fontWeight: FontWeight.w600,
-                      fontSize: 13,
+                      fontSize: 12,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1938,69 +2326,151 @@ class _VaultCardState extends ConsumerState<_VaultCard> {
                 IconButton(
                   icon: Icon(
                     _showPassword ? LucideIcons.eyeOff : LucideIcons.eye,
-                    size: 16,
+                    size: 14,
                   ),
                   onPressed: password == '-'
                       ? null
                       : () => setState(() => _showPassword = !_showPassword),
                   tooltip: _showPassword ? 'Ocultar' : 'Mostrar',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 24,
+                    minHeight: 24,
+                  ),
                 ),
                 IconButton(
-                  icon: const Icon(LucideIcons.copy, size: 16),
+                  icon: const Icon(LucideIcons.copy, size: 14),
                   onPressed: password == '-'
                       ? null
                       : () {
                           Clipboard.setData(ClipboardData(text: password));
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Contraseña copiada')),
+                            SnackBar(
+                              content: Text(
+                                'Contraseña copiada',
+                                style: GoogleFonts.inter(fontSize: 12),
+                              ),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              duration: const Duration(seconds: 1),
+                            ),
                           );
                         },
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 24,
+                    minHeight: 24,
+                  ),
                 ),
               ],
             ),
           ),
+          const SizedBox(width: 16),
+          // Modificada - 90px
           SizedBox(
-            width: 110,
+            width: 90,
             child: Text(
-              DateFormat('dd/MM').format(item.updatedAt),
-              style: Theme.of(context).textTheme.bodySmall,
+              DateFormat('dd/MM/yyyy').format(item.updatedAt),
+              style: const TextStyle(fontSize: 11, color: Color(0xFF5A605E)),
             ),
           ),
+          const SizedBox(width: 16),
+          // Acciones - 80px
           SizedBox(
-            width: 120,
+            width: 80,
             child: Row(
               children: [
-                if (item.url != null && item.url!.isNotEmpty)
-                  IconButton(
-                    icon: const Icon(LucideIcons.externalLink, size: 16),
-                    onPressed: () async {
-                      final uri = Uri.tryParse(item.url!);
-                      if (uri != null) {
-                        await launchUrl(uri);
+                // Favorite star
+                GestureDetector(
+                  onTap: () {
+                    ref
+                        .read(vaultProvider.notifier)
+                        .updateItem(
+                          item.copyWith(isFavorite: !item.isFavorite),
+                        );
+                  },
+                  child: Icon(
+                    item.isFavorite ? LucideIcons.star : LucideIcons.starOff,
+                    size: 14,
+                    color: item.isFavorite
+                        ? const Color(0xFFF59E0B)
+                        : const Color(0xFFADB3B0),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                // Actions popup menu
+                Expanded(
+                  child: PopupMenuButton<String>(
+                    icon: const Icon(LucideIcons.moreVertical, size: 14),
+                    padding: EdgeInsets.zero,
+                    tooltip: 'Acciones',
+                    onSelected: (value) async {
+                      switch (value) {
+                        case 'open':
+                          if (item.url != null && item.url!.isNotEmpty) {
+                            final uri = Uri.tryParse(item.url!);
+                            if (uri != null) await launchUrl(uri);
+                          }
+                          break;
+                        case 'edit':
+                          if (widget.onEdit != null) {
+                            widget.onEdit!();
+                          } else {
+                            VaultView.showAddDialog(
+                              context,
+                              ref,
+                              existingItem: item,
+                            );
+                          }
+                          break;
+                        case 'delete':
+                          _confirmDelete(item);
+                          break;
                       }
                     },
-                    tooltip: 'Abrir',
-                  ),
-                IconButton(
-                  icon: const Icon(LucideIcons.edit2, size: 16),
-                  onPressed:
-                      widget.onEdit ??
-                      () => VaultView.showAddDialog(
-                        context,
-                        ref,
-                        existingItem: item,
+                    itemBuilder: (ctx) => [
+                      if (item.url != null && item.url!.isNotEmpty)
+                        const PopupMenuItem(
+                          value: 'open',
+                          child: Row(
+                            children: [
+                              Icon(LucideIcons.externalLink, size: 14),
+                              SizedBox(width: 8),
+                              Text('Abrir URL'),
+                            ],
+                          ),
+                        ),
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(LucideIcons.edit2, size: 14),
+                            SizedBox(width: 8),
+                            Text('Editar'),
+                          ],
+                        ),
                       ),
-                  tooltip: 'Editar',
-                ),
-                IconButton(
-                  icon: const Icon(
-                    LucideIcons.trash2,
-                    size: 16,
-                    color: Color(0xFFE55D5D),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(
+                              LucideIcons.trash2,
+                              size: 14,
+                              color: Color(0xFFE55D5D),
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Eliminar',
+                              style: TextStyle(color: Color(0xFFE55D5D)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  onPressed: () =>
-                      ref.read(vaultProvider.notifier).deleteItem(item.id),
-                  tooltip: 'Eliminar',
                 ),
               ],
             ),

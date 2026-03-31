@@ -135,6 +135,27 @@ dev_vault/
 4. Ejecuta `flutter analyze` antes de commit
 5. Abre un Pull Request
 
+## Documentación Automática
+
+Este proyecto tiene un workflow que actualiza la documentación automáticamente:
+
+### GitHub Actions
+En cada push a `main` que modifique archivos en `lib/`, se ejecuta automáticamente:
+- Análisis de código con `flutter analyze`
+- Verificación de integridad de documentación
+- Actualización de fechas en los documentos
+- Commit automático con los cambios
+
+### Script Local
+También puedes ejecutar manualmente:
+```bash
+# Windows
+update-docs.bat
+
+# Linux/Mac
+chmod +x update-docs.sh && ./update-docs.sh
+```
+
 ## Licencia
 
 Privado. Todos los derechos reservados.

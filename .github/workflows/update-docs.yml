@@ -1,0 +1,154 @@
+name: 📚 Actualizar Documentación
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'lib/**'
+      - 'pubspec.yaml'
+  workflow_dispatch:
+    inputs:
+      force_update:
+        description: 'Forzar actualización de documentación'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-docs:
+    name: Generar documentación actualizada
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Analizar código
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Detectar cambios en lib/
+        id: changes
+        run: |
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD -- lib/ || echo "")
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo ""
+          echo "Archivos cambiados:"
+          echo "$CHANGED_FILES"
+
+      - name: Generar documentación de arquitectura
+        run: |
+          echo "# Generando documentación de arquitectura..."
+          
+          # Extraer lista de archivos lib/
+          echo "## Estructura actualizada" > docs/.temp-structure.md
+          echo "" >> docs/.temp-structure.md
+          echo '```' >> docs/.temp-structure.md
+          find lib/ -type f -name "*.dart" | sort | while read file; do
+            LINES=$(wc -l < "$file")
+            echo "$file ($LINES líneas)" >> docs/.temp-structure.md
+          done
+          echo '```' >> docs/.temp-structure.md
+          
+          # Extraer dependencias
+          echo "" >> docs/.temp-structure.md
+          echo "## Dependencias" >> docs/.temp-structure.md
+          echo "" >> docs/.temp-structure.md
+          grep -A 100 "dependencies:" pubspec.yaml | grep -B 100 "dev_dependencies:" | head -n -1 >> docs/.temp-structure.md
+
+      - name: Verificar integridad de documentación
+        run: |
+          echo "Verificando archivos de documentación..."
+          
+          DOCS_OK=true
+          
+          for doc in README.md docs/arquitectura.md docs/guia-desarrollo.md docs/guia-usuario.md; do
+            if [ ! -f "$doc" ]; then
+              echo "❌ Falta: $doc"
+              DOCS_OK=false
+            else
+              echo "✅ Existe: $doc"
+            fi
+          done
+          
+          # Verificar que los docs referencien archivos existentes
+          if [ -f "docs/arquitectura.md" ]; then
+            echo ""
+            echo "Verificando referencias en arquitectura.md..."
+            grep -oP 'lib/[\w/]+\.dart' docs/arquitectura.md | sort -u | while read ref; do
+              if [ -f "$ref" ]; then
+                echo "  ✅ $ref"
+              else
+                echo "  ⚠️  $ref (no encontrado)"
+              fi
+            done
+          fi
+          
+          if [ "$DOCS_OK" = false ]; then
+            echo "::warning::Algunos archivos de documentación faltan"
+          fi
+
+      - name: Actualizar fecha en documentación
+        run: |
+          TODAY=$(date +"%d de %B, %Y" -d "today" -l es_ES.UTF-8 2>/dev/null || date +"%d de %B, %Y")
+          
+          for doc in docs/arquitectura.md docs/guia-desarrollo.md docs/guia-usuario.md; do
+            if [ -f "$doc" ]; then
+              sed -i "s/Última actualización:.*/Última actualización: $TODAY/" "$doc"
+              echo "📅 Actualizada fecha en $doc"
+            fi
+          done
+
+      - name: Generar changelog del commit
+        id: changelog
+        run: |
+          echo "## Cambios en esta actualización" > .temp-changelog.md
+          echo "" >> .temp-changelog.md
+          echo "**Archivos modificados:**" >> .temp-changelog.md
+          git diff --name-only HEAD~1 HEAD -- lib/ | while read f; do
+            LINES=$(git diff --stat HEAD~1 HEAD -- "$f" | tail -1 | grep -oP '\d+(?= insertion)' || echo "?")
+            echo "- \`$f\` (+${LINES:-?} líneas)" >> .temp-changelog.md
+          done
+
+      - name: Commit y push de documentación
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add docs/ README.md
+          
+          if git diff --staged --quiet; then
+            echo "📝 No hay cambios en documentación para commitear"
+          else
+            git commit -m "📚 docs: actualizar documentación automática
+
+            Actualización generada por GitHub Actions.
+            
+            $(cat .temp-changelog.md 2>/dev/null || echo '')"
+            
+            git push
+            echo "✅ Documentación actualizada y pusheada"
+          fi
+
+      - name: Limpiar archivos temporales
+        if: always()
+        run: |
+          rm -f docs/.temp-structure.md .temp-changelog.md
