@@ -1,0 +1,18 @@
+{
+  "project": {
+    "name": "DevVault",
+    "type": "flutter",
+    "path": ".",
+    "framework": "flutter"
+  },
+  "tests": {
+    "outputDir": "test/",
+    "testTypes": ["unit", "widget", "integration"],
+    "coverage": true
+  },
+  "execution": {
+    "environment": "local",
+    "device": "windows",
+    "timeout": 300
+  }
+}
