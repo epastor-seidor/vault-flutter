@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:dev_vault/providers/vault_provider.dart';
 import 'package:dev_vault/providers/note_provider.dart';
@@ -15,6 +16,7 @@ import 'package:dev_vault/models/note.dart';
 import 'package:dev_vault/models/task_item.dart';
 import 'package:dev_vault/providers/lock_provider.dart';
 import 'package:dev_vault/providers/security_log_provider.dart';
+import 'package:dev_vault/widgets/credential_editor_panel.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter/services.dart';
@@ -89,8 +91,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           return Scaffold(
             key: _scaffoldKey,
             backgroundColor: isDark ? AppTheme.darkBg : AppTheme.stBg,
-            drawer:
-                isCompact ? Drawer(child: _buildSidebarContent(isDrawer: true)) : null,
+            drawer: isCompact
+                ? Drawer(child: _buildSidebarContent(isDrawer: true))
+                : null,
             endDrawer: _buildSecurityDrawer(),
             body: Column(
               children: [
@@ -100,12 +103,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     children: [
                       if (!isCompact)
                         Container(
-                          width: 240,
+                          width: 220,
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
                             border: Border(
                               right: BorderSide(
-                                  color: Theme.of(context).dividerColor, width: 1),
+                                color: Theme.of(context).dividerColor,
+                                width: 1,
+                              ),
                             ),
                           ),
                           child: _buildSidebarContent(),
@@ -176,90 +180,75 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         children: [
           if (isCompact)
             IconButton(
-              icon: Icon(LucideIcons.menu, size: 18,
-                  color: isDark ? Colors.white54 : AppTheme.stOnSurfaceVariant),
+              icon: Icon(
+                LucideIcons.menu,
+                size: 18,
+                color: isDark ? Colors.white54 : AppTheme.stOnSurfaceVariant,
+              ),
               onPressed: () => _scaffoldKey.currentState?.openDrawer(),
             ),
-          // Breadcrumb
-          Text('Vault',
-              style: TextStyle(
-                  fontSize: 13,
-                  color: isDark
-                      ? Colors.white38
-                      : AppTheme.stOnSurfaceVariant)),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Icon(LucideIcons.chevronRight,
-                size: 13,
-                color: isDark
-                    ? Colors.white24
-                    : AppTheme.stOutlineVariant),
-          ),
-          Text(crumb,
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : AppTheme.stOnSurface)),
           const Spacer(),
-          // Filter tabs
-          _TopTab(label: 'All Items', isSelected: true),
-          const SizedBox(width: 4),
-          _TopTab(label: 'Favorites', isSelected: false),
-          const SizedBox(width: 4),
-          _TopTab(label: 'Recent', isSelected: false),
-          Container(
-            width: 1,
-            height: 16,
-            margin: const EdgeInsets.symmetric(horizontal: 14),
-            color: const Color(0xFFADB3B0).withValues(alpha: 0.20),
+          Text(
+            crumb,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : AppTheme.stOnSurface,
+            ),
           ),
+          const Spacer(),
           // Search
           SizedBox(
-            width: isCompact ? 150 : 220,
-            height: 34,
+            width: isCompact ? 140 : 200,
+            height: 32,
             child: TextField(
               controller: _globalSearchController,
               focusNode: _globalSearchFocusNode,
               onChanged: (v) => setState(() => _globalSearchQuery = v),
               style: TextStyle(
-                  fontSize: 13,
-                  color: isDark ? Colors.white : AppTheme.stOnSurface),
+                fontSize: 13,
+                color: isDark ? Colors.white : AppTheme.stOnSurface,
+              ),
               decoration: InputDecoration(
-                hintText: 'Search Vault...',
+                hintText: 'Search...',
                 hintStyle: TextStyle(
-                    fontSize: 13,
-                    color: isDark
-                        ? Colors.white38
-                        : AppTheme.stOnSurfaceVariant),
-                prefixIcon: Icon(LucideIcons.search,
-                    size: 14,
-                    color: isDark
-                        ? Colors.white38
-                        : AppTheme.stOnSurfaceVariant),
+                  fontSize: 13,
+                  color: isDark ? Colors.white38 : AppTheme.stOnSurfaceVariant,
+                ),
+                prefixIcon: Icon(
+                  LucideIcons.search,
+                  size: 14,
+                  color: isDark ? Colors.white38 : AppTheme.stOnSurfaceVariant,
+                ),
                 filled: true,
                 fillColor: isDark
                     ? const Color(0xFF242426)
                     : AppTheme.stSurfaceLow,
-                contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                contentPadding: const EdgeInsets.symmetric(vertical: 6),
                 border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                    borderSide: BorderSide.none),
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: BorderSide.none,
+                ),
                 enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                    borderSide: BorderSide.none),
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: BorderSide.none,
+                ),
                 focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                    borderSide: BorderSide(
-                        color: AppTheme.stPrimary.withValues(alpha: 0.5))),
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: BorderSide(
+                    color: AppTheme.stPrimary.withValues(alpha: 0.5),
+                  ),
+                ),
               ),
             ),
           ),
           const SizedBox(width: 6),
           IconButton(
-            icon: Icon(LucideIcons.refreshCw,
-                size: 15,
-                color:
-                    isDark ? Colors.white54 : AppTheme.stOnSurfaceVariant),
+            icon: Icon(
+              LucideIcons.refreshCw,
+              size: 15,
+              color: isDark ? Colors.white54 : AppTheme.stOnSurfaceVariant,
+            ),
             tooltip: 'Sincronizar',
             onPressed: () {},
           ),
@@ -268,20 +257,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ElevatedButton(
             onPressed: _handleCreateShortcut,
             style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  isDark ? const Color(0xFFE5E2E1) : AppTheme.stPrimary,
-              foregroundColor:
-                  isDark ? AppTheme.stOnSurface : const Color(0xFFFAF7F6),
+              backgroundColor: isDark
+                  ? const Color(0xFFE5E2E1)
+                  : AppTheme.stPrimary,
+              foregroundColor: isDark
+                  ? AppTheme.stOnSurface
+                  : const Color(0xFFFAF7F6),
               elevation: 0,
               shadowColor: Colors.transparent,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6)),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               minimumSize: const Size(0, 34),
             ),
-            child: const Text('New Item',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            child: const Text(
+              'New Item',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),
@@ -290,150 +283,108 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Widget _buildSidebarContent({bool isDrawer = false}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Stitch: sidebar = surface-container-low (#f2f4f2)
-    final bg = isDark ? const Color(0xFF1C1C1E) : AppTheme.stSurfaceLow;
 
-    return Container(
-      color: bg,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Branding header ─────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-            child: Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF333333)
-                        : AppTheme.stPrimary,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Text('V',
-                      style: TextStyle(
-                          color: Color(0xFFFAF7F6),
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Branding header ─────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+          child: Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF333333) : AppTheme.stPrimary,
+                  borderRadius: BorderRadius.circular(6),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('The Digital Atelier',
-                          style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? Colors.white
-                                  : const Color(0xFF191919))),
-                      Text('SECURE WORKSPACE',
-                          style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1.2,
-                              color: isDark
-                                  ? Colors.white38
-                                  : AppTheme.stOnSurfaceVariant
-                                      .withValues(alpha: 0.6))),
-                    ],
+                child: const Text(
+                  'V',
+                  style: TextStyle(
+                    color: Color(0xFFFAF7F6),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
                   ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'DevVault',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : const Color(0xFF191919),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // ── Nav items ────────────────────────────────────
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Column(
+              children: [
+                _SidebarItem(
+                  icon: LucideIcons.key,
+                  label: 'Credentials',
+                  isSelected: _selectedIndex == 1,
+                  onTap: () {
+                    setState(() => _selectedIndex = 1);
+                    if (isDrawer) Navigator.pop(context);
+                  },
+                ),
+                _SidebarItem(
+                  icon: LucideIcons.fileText,
+                  label: 'Notes',
+                  isSelected: _selectedIndex == 2,
+                  onTap: () {
+                    setState(() => _selectedIndex = 2);
+                    if (isDrawer) Navigator.pop(context);
+                  },
+                ),
+                _SidebarItem(
+                  icon: LucideIcons.checkCircle2,
+                  label: 'Tasks',
+                  isSelected: _selectedIndex == 3,
+                  onTap: () {
+                    setState(() => _selectedIndex = 3);
+                    if (isDrawer) Navigator.pop(context);
+                  },
                 ),
               ],
             ),
           ),
+        ),
 
-          // ── Nav items ────────────────────────────────────
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Column(
-                children: [
-                  _SidebarItem(
-                    icon: LucideIcons.key,
-                    label: 'Credentials',
-                    isSelected: _selectedIndex == 1,
-                    onTap: () {
-                      setState(() => _selectedIndex = 1);
-                      if (isDrawer) Navigator.pop(context);
-                    },
-                  ),
-                  _SidebarItem(
-                    icon: LucideIcons.fileText,
-                    label: 'Notes',
-                    isSelected: _selectedIndex == 2,
-                    onTap: () {
-                      setState(() => _selectedIndex = 2);
-                      if (isDrawer) Navigator.pop(context);
-                    },
-                  ),
-                  _SidebarItem(
-                    icon: LucideIcons.checkCircle2,
-                    label: 'Tasks',
-                    isSelected: _selectedIndex == 3,
-                    onTap: () {
-                      setState(() => _selectedIndex = 3);
-                      if (isDrawer) Navigator.pop(context);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // ── Bottom: Add New + Settings + Lock ────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _handleCreateShortcut,
-                icon: const Icon(LucideIcons.plus, size: 14),
-                label: const Text('Add New'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      isDark ? const Color(0xFF333333) : AppTheme.stPrimary,
-                  foregroundColor: const Color(0xFFFAF7F6),
-                  elevation: 0,
-                  shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6)),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  textStyle: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w500),
-                ),
-              ),
-            ),
-          ),
-          Divider(
-            height: 1,
-            color: AppTheme.stOutlineVariant.withValues(alpha: 0.10),
-          ),
-          _SidebarItem(
-            icon: LucideIcons.settings2,
-            label: 'Settings',
-            isSelected: _selectedIndex == 4,
-            onTap: () {
-              setState(() => _selectedIndex = 4);
-              if (isDrawer) Navigator.pop(context);
-            },
-          ),
-          _SidebarItem(
-            icon: LucideIcons.lock,
-            label: 'Lock',
-            isSelected: false,
-            onTap: () {
-              ref.read(lockProvider.notifier).lock();
-              if (isDrawer) Navigator.pop(context);
-            },
-          ),
-          const SizedBox(height: 8),
-        ],
-      ),
+        // ── Bottom: Settings + Lock ────────────
+        Divider(
+          height: 1,
+          color: AppTheme.stOutlineVariant.withValues(alpha: 0.10),
+        ),
+        _SidebarItem(
+          icon: LucideIcons.settings2,
+          label: 'Settings',
+          isSelected: _selectedIndex == 4,
+          onTap: () {
+            setState(() => _selectedIndex = 4);
+            if (isDrawer) Navigator.pop(context);
+          },
+        ),
+        _SidebarItem(
+          icon: LucideIcons.lock,
+          label: 'Lock',
+          isSelected: false,
+          onTap: () {
+            ref.read(lockProvider.notifier).lock();
+            if (isDrawer) Navigator.pop(context);
+          },
+        ),
+        const SizedBox(height: 8),
+      ],
     );
   }
 
@@ -453,9 +404,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               children: [
                 const Icon(LucideIcons.bell, size: 24),
                 const SizedBox(width: 16),
-                const Text('Seguridad', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Seguridad',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
                 const Spacer(),
-                IconButton(icon: const Icon(LucideIcons.x), onPressed: () => Navigator.pop(context)),
+                IconButton(
+                  icon: const Icon(LucideIcons.x),
+                  onPressed: () => Navigator.pop(context),
+                ),
               ],
             ),
           ),
@@ -468,7 +425,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 final log = logs[i];
                 return ListTile(
                   contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                  title: Text(log.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  title: Text(
+                    log.title,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   subtitle: Text(log.message),
                   trailing: Text(
                     DateFormat('HH:mm').format(log.timestamp),
@@ -517,20 +477,22 @@ class _SidebarItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Stitch: active = surface-container (#ecefec), inactive = transparent
-    final selectedBg =
-        isDark ? const Color(0xFF2C2C2E) : AppTheme.stSurfaceContainer;
-    final selectedText =
-        isDark ? Colors.white : const Color(0xFF191919);
-    final unselectedText =
-        isDark ? Colors.white54 : AppTheme.stOnSurfaceVariant;
+    final selectedBg = isDark
+        ? const Color(0xFF2C2C2E)
+        : AppTheme.stSurfaceContainer;
+    final selectedText = isDark ? Colors.white : const Color(0xFF191919);
+    final unselectedText = isDark
+        ? Colors.white54
+        : AppTheme.stOnSurfaceVariant;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 1),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(6),
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           decoration: BoxDecoration(
             color: isSelected ? selectedBg : Colors.transparent,
@@ -538,48 +500,21 @@ class _SidebarItem extends ConsumerWidget {
           ),
           child: Row(
             children: [
-              Icon(icon,
-                  size: 16,
-                  color: isSelected ? selectedText : unselectedText),
-              const SizedBox(width: 10),
+              Icon(
+                icon,
+                size: 16,
+                color: isSelected ? selectedText : unselectedText,
+              ),
+              const SizedBox(width: 8),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 13,
-                  fontWeight:
-                      isSelected ? FontWeight.w600 : FontWeight.w500,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   color: isSelected ? selectedText : unselectedText,
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TopTab extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  const _TopTab({required this.label, required this.isSelected});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return InkWell(
-      onTap: () {},
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected
-                ? (isDark ? Colors.white : const Color(0xFF1A1A1A))
-                : (isDark ? Colors.white38 : const Color(0xFFAAAAAA)),
           ),
         ),
       ),
@@ -594,208 +529,185 @@ class HomeOverview extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final vaultItems = ref.watch(vaultProvider);
     final notes = ref.watch(noteProvider);
-    final accentColor = Theme.of(context).primaryColor;
+    final tasks = ref.watch(taskProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppTheme.darkOnSurface : AppTheme.stOnSurface;
+    final textSecondary = isDark
+        ? AppTheme.darkOnSurfaceVariant
+        : AppTheme.stOnSurfaceVariant;
+    final hoverBg = isDark ? AppTheme.darkSurfaceLow : AppTheme.stSurfaceLow;
 
-    return Container(
-      color: Colors.transparent,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(48.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Hola de nuevo,',
-                      style: TextStyle(fontSize: 14, color: isDark ? Colors.white38 : Colors.grey, fontWeight: FontWeight.w600),
-                    ),
-                    const Text('Workspace Principal', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: -1)),
-                  ],
-                ),
-                const Spacer(),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => Scaffold.of(context).openEndDrawer(),
-                    borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.04),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05)),
-                      ),
-                      child: const Icon(LucideIcons.bell, size: 16),
-                    ),
-                  ),
-                ),
-              ],
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Workspace',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              color: textPrimary,
+              letterSpacing: -0.02,
             ),
-            const SizedBox(height: 48),
-            // Bento Grid Layout
-            GridView.count(
-              crossAxisCount: 3,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 24,
-              mainAxisSpacing: 24,
-              childAspectRatio: 1.4,
-              children: [
-                _BentoCard(
-                  span: 1,
-                  color: accentColor,
-                  title: 'Vault',
-                  subtitle: '${vaultItems.length} Records',
-                  icon: LucideIcons.lock,
-                  onTap: () {},
-                ),
-              _BentoCard(
-                  span: 1,
-                  color: Colors.orangeAccent,
-                  title: 'Notas',
-                  subtitle: '${notes.length} Notas',
-                  icon: LucideIcons.fileText,
-                  onTap: () {}),
-                _BentoCard(
-                    span: 1,
-                    color: Colors.tealAccent,
-                    title: 'Seguridad',
-                    subtitle: 'AES-256 Activo',
-                    icon: LucideIcons.shieldCheck,
-                    onTap: () {}),
-                _RecentListCard(
-                  items: vaultItems.take(3).toList(),
-                  title: 'Actividad Reciente',
-                ),
-                _TipsCard(),
-              ],
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Accede a tus credenciales, notas y tareas desde un solo lugar.',
+            style: TextStyle(fontSize: 14, color: textSecondary, height: 1.5),
+          ),
+          const SizedBox(height: 32),
+
+          // Quick access section
+          _DashboardSection(
+            title: 'Credenciales recientes',
+            icon: LucideIcons.key,
+            items: vaultItems.take(5).toList(),
+            emptyMessage: 'No hay credenciales guardadas',
+            emptyAction: 'Agregar credencial',
+            onAction: () => VaultView.showAddDialog(context, ref),
+            hoverBg: hoverBg,
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
+          ),
+          const SizedBox(height: 24),
+
+          _DashboardSection(
+            title: 'Notas recientes',
+            icon: LucideIcons.fileText,
+            items: notes.take(5).toList(),
+            emptyMessage: 'No hay notas creadas',
+            emptyAction: 'Crear nota',
+            onAction: () => NotesView.showAddNoteDialog(context, ref),
+            hoverBg: hoverBg,
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
+          ),
+          const SizedBox(height: 24),
+
+          _DashboardSection(
+            title: 'Tareas pendientes',
+            icon: LucideIcons.checkCircle2,
+            items: tasks.where((t) => !t.isCompleted).take(5).toList(),
+            emptyMessage: 'No hay tareas pendientes',
+            emptyAction: 'Crear tarea',
+            onAction: () => TasksView.showAddTaskDialog(context, ref),
+            hoverBg: hoverBg,
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
+          ),
+        ],
       ),
     );
   }
 }
 
-class _BentoCard extends StatelessWidget {
-  final int span;
-  final Color color;
+class _DashboardSection extends StatelessWidget {
   final String title;
-  final String subtitle;
   final IconData icon;
-  final VoidCallback onTap;
+  final List<dynamic> items;
+  final String emptyMessage;
+  final String emptyAction;
+  final VoidCallback onAction;
+  final Color hoverBg;
+  final Color textPrimary;
+  final Color textSecondary;
 
-  const _BentoCard({
-    required this.span,
-    required this.color,
+  const _DashboardSection({
     required this.title,
-    required this.subtitle,
     required this.icon,
-    required this.onTap,
+    required this.items,
+    required this.emptyMessage,
+    required this.emptyAction,
+    required this.onAction,
+    required this.hoverBg,
+    required this.textPrimary,
+    required this.textSecondary,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Theme.of(context).dividerColor),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(6),
+            Icon(icon, size: 16, color: textSecondary),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: textPrimary,
+                letterSpacing: -0.02,
               ),
-              child: Icon(icon, color: color, size: 20),
             ),
-            const Spacer(),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, letterSpacing: -0.5)),
-            const SizedBox(height: 4),
-            Text(subtitle, style: TextStyle(color: isDark ? Colors.white38 : Colors.black54, fontSize: 12, fontWeight: FontWeight.w500)),
+            const SizedBox(width: 8),
+            Text(
+              '(${items.length})',
+              style: TextStyle(fontSize: 12, color: textSecondary),
+            ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _RecentListCard extends StatelessWidget {
-  final List<VaultItem> items;
-  final String title;
-  const _RecentListCard({required this.items, required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Theme.of(context).dividerColor),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-          const SizedBox(height: 16),
-          if (items.isEmpty)
-            const Text('Sin actividad reciente', style: TextStyle(color: Colors.grey, fontSize: 12))
-          else
-            ...items.map((i) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
+        const SizedBox(height: 12),
+        if (items.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            decoration: BoxDecoration(
+              color: hoverBg,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  emptyMessage,
+                  style: TextStyle(fontSize: 13, color: textSecondary),
+                ),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: onAction,
+                  child: Text(
+                    emptyAction,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          ...items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
                   child: Row(
                     children: [
-                      const Icon(LucideIcons.fileText, size: 12, color: Colors.grey),
-                      const SizedBox(width: 8),
-                      Text(i.title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                      Icon(icon, size: 14, color: textSecondary),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          item.title ?? '',
+                          style: TextStyle(fontSize: 13, color: textPrimary),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ],
                   ),
-                )),
-        ],
-      ),
-    );
-  }
-}
-
-class _TipsCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(LucideIcons.lightbulb, color: Theme.of(context).primaryColor, size: 20),
-          const SizedBox(height: 16),
-            Text(
-              'Consejo de Seguridad', 
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+              ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              'Usa contraseñas complejas.', 
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), fontSize: 12),
-            ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }
@@ -804,16 +716,16 @@ class VaultView extends ConsumerStatefulWidget {
   final String globalQuery;
   final bool isCompact;
 
-  const VaultView({
-    super.key,
-    this.globalQuery = '',
-    this.isCompact = false,
-  });
+  const VaultView({super.key, this.globalQuery = '', this.isCompact = false});
 
   @override
   ConsumerState<VaultView> createState() => _VaultViewState();
 
-  static void showAddDialog(BuildContext context, WidgetRef ref, {VaultItem? existingItem}) {
+  static void showAddDialog(
+    BuildContext context,
+    WidgetRef ref, {
+    VaultItem? existingItem,
+  }) {
     final titleC = TextEditingController(text: existingItem?.title);
     final userC = TextEditingController(text: existingItem?.username);
     final passC = TextEditingController(text: existingItem?.password);
@@ -841,7 +753,10 @@ class VaultView extends ConsumerStatefulWidget {
             Expanded(
               child: Text(
                 existingItem == null ? 'Nueva Credencial' : 'Editar Credencial',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -857,7 +772,9 @@ class VaultView extends ConsumerStatefulWidget {
                   labelText: 'Sitio o Servicio',
                   hintText: 'Ej: Gmail, Netflix, etc.',
                   prefixIcon: const Icon(LucideIcons.globe, size: 18),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -867,7 +784,9 @@ class VaultView extends ConsumerStatefulWidget {
                   labelText: 'Usuario o Email',
                   hintText: 'Tu nombre de usuario',
                   prefixIcon: const Icon(LucideIcons.user, size: 18),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -878,7 +797,9 @@ class VaultView extends ConsumerStatefulWidget {
                   labelText: 'Contraseña',
                   hintText: 'Tu contraseña segura',
                   prefixIcon: const Icon(LucideIcons.lock, size: 18),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   suffixIcon: IconButton(
                     icon: const Icon(LucideIcons.eyeOff, size: 18),
                     onPressed: () {},
@@ -892,7 +813,9 @@ class VaultView extends ConsumerStatefulWidget {
                   labelText: 'URL (opcional)',
                   hintText: 'https://ejemplo.com',
                   prefixIcon: const Icon(LucideIcons.link, size: 18),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
             ],
@@ -907,12 +830,16 @@ class VaultView extends ConsumerStatefulWidget {
             onPressed: () {
               if (titleC.text.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Por favor ingresa el nombre del sitio')),
+                  const SnackBar(
+                    content: Text('Por favor ingresa el nombre del sitio'),
+                  ),
                 );
                 return;
               }
               final item = VaultItem(
-                id: existingItem?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+                id:
+                    existingItem?.id ??
+                    DateTime.now().millisecondsSinceEpoch.toString(),
                 title: titleC.text,
                 username: userC.text,
                 password: passC.text,
@@ -922,12 +849,16 @@ class VaultView extends ConsumerStatefulWidget {
               if (existingItem == null) {
                 ref.read(vaultProvider.notifier).addItem(item);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Credencial guardada exitosamente')),
+                  const SnackBar(
+                    content: Text('Credencial guardada exitosamente'),
+                  ),
                 );
               } else {
                 ref.read(vaultProvider.notifier).updateItem(item);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Credencial actualizada exitosamente')),
+                  const SnackBar(
+                    content: Text('Credencial actualizada exitosamente'),
+                  ),
                 );
               }
               Navigator.pop(context);
@@ -941,9 +872,11 @@ class VaultView extends ConsumerStatefulWidget {
 }
 
 class _VaultViewState extends ConsumerState<VaultView> {
+  VaultItem? _editingItem;
+  bool _showGridView = false;
+
   @override
   Widget build(BuildContext context) {
-    // Use Stitch surface tokens
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppTheme.darkBg : AppTheme.stBg;
     final cardBg = isDark ? AppTheme.darkSurface : AppTheme.stSurface;
@@ -951,8 +884,9 @@ class _VaultViewState extends ConsumerState<VaultView> {
         ? AppTheme.darkOutlineVariant.withValues(alpha: 0.3)
         : AppTheme.stOutlineVariant.withValues(alpha: 0.12);
     final textPrimary = isDark ? AppTheme.darkOnSurface : AppTheme.stOnSurface;
-    final textSecondary =
-        isDark ? AppTheme.darkOnSurfaceVariant : AppTheme.stOnSurfaceVariant;
+    final textSecondary = isDark
+        ? AppTheme.darkOnSurfaceVariant
+        : AppTheme.stOnSurfaceVariant;
 
     final rawItems = ref.watch(vaultProvider);
     final q = widget.globalQuery.trim().toLowerCase();
@@ -968,127 +902,363 @@ class _VaultViewState extends ConsumerState<VaultView> {
     final items = [...filtered]
       ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
-    return Container(
-      color: bg,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Credenciales', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: textPrimary, letterSpacing: -0.5)),
-            const SizedBox(height: 6),
-            Text(
-              'Gestiona tus claves de acceso e identidades digitales con precisión encriptada. Todos los datos se almacenan localmente y están protegidos de extremo a extremo.',
-              style: TextStyle(fontSize: 13, color: textSecondary, height: 1.5),
-            ),
-            const SizedBox(height: 24),
-            Row(
+    return Stack(
+      children: [
+        Container(
+          color: bg,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _StatCard(label: 'CLAVES TOTALES', value: '${items.length}', cardBg: cardBg, borderColor: borderColor, textPrimary: textPrimary, textSecondary: textSecondary),
-                const SizedBox(width: 16),
-                _StatCard(label: 'PUNTAJE DE SEGURIDAD', value: '98%', badge: 'EXCELENTE', badgeColor: const Color(0xFF22C55E), cardBg: cardBg, borderColor: borderColor, textPrimary: textPrimary, textSecondary: textSecondary),
-                const SizedBox(width: 16),
-                _StatCard(label: 'ÚLTIMA SYNC', value: 'Hace 2 min', cardBg: cardBg, borderColor: borderColor, textPrimary: textPrimary, textSecondary: textSecondary),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Container(
-              decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(12), border: Border.all(color: borderColor)),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    decoration: BoxDecoration(border: Border(bottom: BorderSide(color: borderColor))),
-                    child: Row(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(width: 220, child: Text('SITIO / SERVICIO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: textSecondary))),
-                        SizedBox(width: 180, child: Text('USUARIO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: textSecondary))),
-                        SizedBox(width: 150, child: Text('CONTRASEÑA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: textSecondary))),
-                        Expanded(child: Text('URL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: textSecondary))),
-                        SizedBox(width: 80, child: Text('ACCIONES', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: textSecondary))),
+                        Text(
+                          'Credentials',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Gestiona tus claves de acceso e identidades digitales con precisión encriptada.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: textSecondary,
+                            height: 1.5,
+                          ),
+                        ),
                       ],
                     ),
-                  ),
-                  if (items.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.all(48),
-                      child: Center(child: Text(q.isEmpty ? 'No hay credenciales guardadas' : 'No se encontraron resultados', style: TextStyle(color: textSecondary))),
-                    )
-                  else
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: items.length,
-                      separatorBuilder: (_, __) => Divider(height: 1, color: borderColor),
-                      itemBuilder: (ctx, i) => _VaultCard(key: ValueKey(items[i].id), item: items[i], compact: widget.isCompact),
-                    ),
-                  if (items.isNotEmpty)
+                    // View toggle
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      decoration: BoxDecoration(border: Border(top: BorderSide(color: borderColor))),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppTheme.darkSurfaceLow
+                            : AppTheme.stSurfaceLow,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       child: Row(
                         children: [
-                          Text('Mostrando ${items.length} de ${items.length} entradas', style: TextStyle(fontSize: 12, color: textSecondary)),
-                          const Spacer(),
-                          OutlinedButton(
-                            onPressed: null,
-                            style: OutlinedButton.styleFrom(side: BorderSide(color: borderColor), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                            child: Text('Anterior', style: TextStyle(fontSize: 12, color: textSecondary)),
+                          IconButton(
+                            icon: Icon(
+                              LucideIcons.list,
+                              size: 16,
+                              color: !_showGridView
+                                  ? textPrimary
+                                  : textSecondary,
+                            ),
+                            onPressed: () =>
+                                setState(() => _showGridView = false),
+                            tooltip: 'Lista',
                           ),
-                          const SizedBox(width: 8),
-                          OutlinedButton(
-                            onPressed: null,
-                            style: OutlinedButton.styleFrom(side: BorderSide(color: borderColor), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                            child: Text('Siguiente', style: TextStyle(fontSize: 12, color: textSecondary)),
+                          IconButton(
+                            icon: Icon(
+                              LucideIcons.layoutGrid,
+                              size: 16,
+                              color: _showGridView
+                                  ? textPrimary
+                                  : textSecondary,
+                            ),
+                            onPressed: () =>
+                                setState(() => _showGridView = true),
+                            tooltip: 'Cuadrícula',
                           ),
                         ],
                       ),
                     ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            // ── Pro Tip banner ── matches Stitch dashed border
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: (isDark
-                      ? AppTheme.darkOutlineVariant
-                      : AppTheme.stOutlineVariant)
-                      .withValues(alpha: 0.20),
-                  strokeAlign: BorderSide.strokeAlignInside,
+                  ],
                 ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(LucideIcons.info,
-                      size: 16, color: AppTheme.stPrimary),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Consejo: Navegación con Teclado',
-                            style: TextStyle(
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    _StatCard(
+                      label: 'CLAVES TOTALES',
+                      value: '${items.length}',
+                      cardBg: cardBg,
+                      borderColor: borderColor,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                    ),
+                    const SizedBox(width: 16),
+                    _StatCard(
+                      label: 'PUNTAJE DE SEGURIDAD',
+                      value: '98%',
+                      badge: 'EXCELENTE',
+                      badgeColor: const Color(0xFF22C55E),
+                      cardBg: cardBg,
+                      borderColor: borderColor,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                    ),
+                    const SizedBox(width: 16),
+                    _StatCard(
+                      label: 'ÚLTIMA SYNC',
+                      value: 'Hace 2 min',
+                      cardBg: cardBg,
+                      borderColor: borderColor,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                if (_showGridView)
+                  _buildGridView(
+                    items,
+                    textPrimary,
+                    textSecondary,
+                    cardBg,
+                    borderColor,
+                  )
+                else
+                  _buildListView(
+                    items,
+                    textPrimary,
+                    textSecondary,
+                    cardBg,
+                    borderColor,
+                  ),
+                const SizedBox(height: 24),
+                // ── Pro Tip banner ── matches Stitch dashed border
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color:
+                          (isDark
+                                  ? AppTheme.darkOutlineVariant
+                                  : AppTheme.stOutlineVariant)
+                              .withValues(alpha: 0.20),
+                      strokeAlign: BorderSide.strokeAlignInside,
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        LucideIcons.info,
+                        size: 16,
+                        color: AppTheme.stPrimary,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Consejo: Navegación con Teclado',
+                              style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: textPrimary)),
-                        const SizedBox(height: 4),
-                        Text(
-                            'Presiona Ctrl+F para buscar, Ctrl+N para nueva entrada, Ctrl+L para bloquear.',
-                            style: TextStyle(
-                                fontSize: 12, color: textSecondary)),
-                      ],
+                                color: textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Presiona Ctrl+F para buscar, Ctrl+N para nueva entrada, Ctrl+L para bloquear.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // ── Sliding Editor Panel ──
+        if (_editingItem != null)
+          Stack(
+            children: [
+              ModalBarrier(
+                color: Colors.black.withValues(alpha: 0.10),
+                dismissible: true,
+                onDismiss: () => setState(() => _editingItem = null),
+              ),
+              Positioned.fill(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    CredentialEditorPanel(
+                      item: _editingItem!,
+                      onClose: () => setState(() => _editingItem = null),
                     ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildGridView(
+    List<VaultItem> items,
+    Color textPrimary,
+    Color textSecondary,
+    Color cardBg,
+    Color borderColor,
+  ) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1.4,
+      ),
+      itemCount: items.length,
+      itemBuilder: (ctx, i) => _VaultGridCard(
+        key: ValueKey(items[i].id),
+        item: items[i],
+        onTap: () => setState(() => _editingItem = items[i]),
+        textPrimary: textPrimary,
+        textSecondary: textSecondary,
+        cardBg: cardBg,
+        borderColor: borderColor,
+      ),
+    );
+  }
+
+  Widget _buildListView(
+    List<VaultItem> items,
+    Color textPrimary,
+    Color textSecondary,
+    Color cardBg,
+    Color borderColor,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: borderColor)),
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 220,
+                  child: Text(
+                    'SITIO / SERVICIO',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.0,
+                      color: textSecondary,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 180,
+                  child: Text(
+                    'USUARIO',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.0,
+                      color: textSecondary,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 150,
+                  child: Text(
+                    'CONTRASEÑA',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.0,
+                      color: textSecondary,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'URL',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.0,
+                      color: textSecondary,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 80,
+                  child: Text(
+                    'ACCIONES',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.0,
+                      color: textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (items.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(48),
+              child: Center(
+                child: Text(
+                  'No hay credenciales guardadas',
+                  style: TextStyle(color: textSecondary),
+                ),
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: items.length,
+              separatorBuilder: (_, __) =>
+                  Divider(height: 1, color: borderColor),
+              itemBuilder: (ctx, i) => _VaultCard(
+                key: ValueKey(items[i].id),
+                item: items[i],
+                compact: widget.isCompact,
+                onEdit: () => setState(() => _editingItem = items[i]),
+              ),
+            ),
+          if (items.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: borderColor)),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    'Mostrando ${items.length} de ${items.length} entradas',
+                    style: TextStyle(fontSize: 12, color: textSecondary),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -1128,21 +1298,47 @@ class _StatCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: textSecondary)),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.0,
+                color: textSecondary,
+              ),
+            ),
             const SizedBox(height: 8),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(value, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: textPrimary, letterSpacing: -1)),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                    letterSpacing: -1,
+                  ),
+                ),
                 if (badge != null) ...[
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: (badgeColor ?? Colors.green).withOpacity(0.12),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Text(badge!, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: badgeColor ?? Colors.green)),
+                    child: Text(
+                      badge!,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: badgeColor ?? Colors.green,
+                      ),
+                    ),
                   ),
                 ],
               ],
@@ -1154,11 +1350,114 @@ class _StatCard extends StatelessWidget {
   }
 }
 
+class _VaultGridCard extends StatelessWidget {
+  final VaultItem item;
+  final VoidCallback onTap;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color cardBg;
+  final Color borderColor;
+
+  const _VaultGridCard({
+    super.key,
+    required this.item,
+    required this.onTap,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.cardBg,
+    required this.borderColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: borderColor.withValues(alpha: 0.10)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppTheme.stSurfaceContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    item.title.isEmpty ? '?' : item.title[0].toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.stPrimary,
+                    ),
+                  ),
+                ),
+                Icon(LucideIcons.star, size: 16, color: borderColor),
+              ],
+            ),
+            const Spacer(),
+            Text(
+              item.title,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: textPrimary,
+                letterSpacing: -0.02,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              item.username ?? 'Sin usuario',
+              style: TextStyle(fontSize: 12, color: textSecondary),
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (item.category != null) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppTheme.stSurfaceContainer,
+                  borderRadius: BorderRadius.circular(9999),
+                ),
+                child: Text(
+                  item.category!.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.0,
+                    color: textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _VaultCard extends ConsumerStatefulWidget {
   final VaultItem item;
   final bool compact;
-  const _VaultCard({super.key, required this.item, this.compact = false});
+  final VoidCallback? onEdit;
+  const _VaultCard({
+    super.key,
+    required this.item,
+    this.compact = false,
+    this.onEdit,
+  });
   @override
   ConsumerState<_VaultCard> createState() => _VaultCardState();
 }
@@ -1169,7 +1468,9 @@ class _VaultCardState extends ConsumerState<_VaultCard> {
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
-    final username = item.username?.isNotEmpty == true ? item.username! : 'Sin usuario';
+    final username = item.username?.isNotEmpty == true
+        ? item.username!
+        : 'Sin usuario';
     final password = item.password?.isNotEmpty == true ? item.password! : '-';
 
     if (widget.compact) {
@@ -1188,29 +1489,53 @@ class _VaultCardState extends ConsumerState<_VaultCard> {
               Row(
                 children: [
                   Expanded(
-                    child: Text(item.title, style: const TextStyle(fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis),
+                    child: Text(
+                      item.title,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(LucideIcons.edit2, size: 16),
-                    onPressed: () => VaultView.showAddDialog(context, ref, existingItem: item),
+                    onPressed: () => VaultView.showAddDialog(
+                      context,
+                      ref,
+                      existingItem: item,
+                    ),
                   ),
                   IconButton(
-                    icon: const Icon(LucideIcons.trash2, size: 16, color: Colors.redAccent),
-                    onPressed: () => ref.read(vaultProvider.notifier).deleteItem(item.id),
+                    icon: const Icon(
+                      LucideIcons.trash2,
+                      size: 16,
+                      color: Color(0xFFE55D5D),
+                    ),
+                    onPressed: () =>
+                        ref.read(vaultProvider.notifier).deleteItem(item.id),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
-              SelectableText(username, style: Theme.of(context).textTheme.bodyMedium),
+              SelectableText(
+                username,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
               const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
-                    child: Text(_showPassword ? password : '••••••••••', style: const TextStyle(fontFamily: 'Courier')),
+                    child: Text(
+                      _showPassword ? password : '••••••••••',
+                      style: const TextStyle(fontFamily: 'Courier'),
+                    ),
                   ),
                   IconButton(
-                    icon: Icon(_showPassword ? LucideIcons.eyeOff : LucideIcons.eye, size: 16),
-                    onPressed: password == '-' ? null : () => setState(() => _showPassword = !_showPassword),
+                    icon: Icon(
+                      _showPassword ? LucideIcons.eyeOff : LucideIcons.eye,
+                      size: 16,
+                    ),
+                    onPressed: password == '-'
+                        ? null
+                        : () => setState(() => _showPassword = !_showPassword),
                   ),
                   IconButton(
                     icon: const Icon(LucideIcons.copy, size: 16),
@@ -1218,7 +1543,11 @@ class _VaultCardState extends ConsumerState<_VaultCard> {
                         ? null
                         : () {
                             Clipboard.setData(ClipboardData(text: password));
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Contraseña copiada')));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Contraseña copiada'),
+                              ),
+                            );
                           },
                   ),
                 ],
@@ -1249,7 +1578,7 @@ class _VaultCardState extends ConsumerState<_VaultCard> {
                     item.title.isEmpty ? '?' : item.title[0].toUpperCase(),
                     style: TextStyle(
                       color: Theme.of(context).primaryColor,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -1257,7 +1586,10 @@ class _VaultCardState extends ConsumerState<_VaultCard> {
                 Expanded(
                   child: Text(
                     item.title,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -1278,13 +1610,22 @@ class _VaultCardState extends ConsumerState<_VaultCard> {
                 Expanded(
                   child: Text(
                     _showPassword ? password : '••••••••••',
-                    style: const TextStyle(fontFamily: 'Courier', fontWeight: FontWeight.w600, fontSize: 13),
+                    style: const TextStyle(
+                      fontFamily: 'Courier',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 IconButton(
-                  icon: Icon(_showPassword ? LucideIcons.eyeOff : LucideIcons.eye, size: 16),
-                  onPressed: password == '-' ? null : () => setState(() => _showPassword = !_showPassword),
+                  icon: Icon(
+                    _showPassword ? LucideIcons.eyeOff : LucideIcons.eye,
+                    size: 16,
+                  ),
+                  onPressed: password == '-'
+                      ? null
+                      : () => setState(() => _showPassword = !_showPassword),
                   tooltip: _showPassword ? 'Ocultar' : 'Mostrar',
                 ),
                 IconButton(
@@ -1325,12 +1666,23 @@ class _VaultCardState extends ConsumerState<_VaultCard> {
                   ),
                 IconButton(
                   icon: const Icon(LucideIcons.edit2, size: 16),
-                  onPressed: () => VaultView.showAddDialog(context, ref, existingItem: item),
+                  onPressed:
+                      widget.onEdit ??
+                      () => VaultView.showAddDialog(
+                        context,
+                        ref,
+                        existingItem: item,
+                      ),
                   tooltip: 'Editar',
                 ),
                 IconButton(
-                  icon: const Icon(LucideIcons.trash2, size: 16, color: Colors.redAccent),
-                  onPressed: () => ref.read(vaultProvider.notifier).deleteItem(item.id),
+                  icon: const Icon(
+                    LucideIcons.trash2,
+                    size: 16,
+                    color: Color(0xFFE55D5D),
+                  ),
+                  onPressed: () =>
+                      ref.read(vaultProvider.notifier).deleteItem(item.id),
                   tooltip: 'Eliminar',
                 ),
               ],
@@ -1349,7 +1701,11 @@ class NotesView extends ConsumerStatefulWidget {
   @override
   ConsumerState<NotesView> createState() => _NotesViewState();
 
-  static void showAddNoteDialog(BuildContext context, WidgetRef ref, {Note? existingNote}) {
+  static void showAddNoteDialog(
+    BuildContext context,
+    WidgetRef ref, {
+    Note? existingNote,
+  }) {
     final noteId =
         existingNote?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
     final titleC = TextEditingController(text: existingNote?.title);
@@ -1364,20 +1720,23 @@ class NotesView extends ConsumerStatefulWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Theme.of(context).primaryColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
+              child: Icon(
                 LucideIcons.fileText,
                 size: 20,
-                color: Colors.orange,
+                color: Theme.of(context).primaryColor,
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 existingNote == null ? 'Nueva Nota' : 'Editar Nota',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -1393,7 +1752,9 @@ class NotesView extends ConsumerStatefulWidget {
                   labelText: 'Título',
                   hintText: 'Ej: Ideas de proyecto',
                   prefixIcon: const Icon(LucideIcons.type, size: 18),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -1402,9 +1763,12 @@ class NotesView extends ConsumerStatefulWidget {
                 maxLines: 6,
                 decoration: InputDecoration(
                   labelText: 'Contenido',
-                  hintText: 'Escribe tus ideas aquí...\nTip: Las URLs serán clickeables automáticamente',
+                  hintText:
+                      'Escribe tus ideas aquí...\nTip: Las URLs serán clickeables automáticamente',
                   prefixIcon: const Icon(LucideIcons.fileText, size: 18),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 enableInteractiveSelection: true,
                 toolbarOptions: const ToolbarOptions(
@@ -1418,11 +1782,13 @@ class NotesView extends ConsumerStatefulWidget {
               Align(
                 alignment: Alignment.centerRight,
                 child: OutlinedButton.icon(
-                  onPressed: () => unawaited(_tryPasteImageIntoNote(
-                    context: context,
-                    contentController: contentC,
-                    noteId: noteId,
-                  )),
+                  onPressed: () => unawaited(
+                    _tryPasteImageIntoNote(
+                      context: context,
+                      contentController: contentC,
+                      noteId: noteId,
+                    ),
+                  ),
                   icon: const Icon(LucideIcons.image, size: 14),
                   label: const Text('Pegar imagen'),
                 ),
@@ -1444,22 +1810,34 @@ class NotesView extends ConsumerStatefulWidget {
                 return;
               }
               if (existingNote == null) {
-                ref.read(noteProvider.notifier).addNote(Note(
-                  id: noteId,
-                  title: titleC.text,
-                  content: contentC.text,
-                  createdAt: DateTime.now(),
-                  updatedAt: DateTime.now(),
-                ));
+                ref
+                    .read(noteProvider.notifier)
+                    .addNote(
+                      Note(
+                        id: noteId,
+                        title: titleC.text,
+                        content: contentC.text,
+                        createdAt: DateTime.now(),
+                        updatedAt: DateTime.now(),
+                      ),
+                    );
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Nota creada exitosamente')),
                 );
               } else {
-                ref.read(noteProvider.notifier).updateNote(existingNote.copyWith(
-                  title: titleC.text, content: contentC.text, updatedAt: DateTime.now(),
-                ));
+                ref
+                    .read(noteProvider.notifier)
+                    .updateNote(
+                      existingNote.copyWith(
+                        title: titleC.text,
+                        content: contentC.text,
+                        updatedAt: DateTime.now(),
+                      ),
+                    );
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Nota actualizada exitosamente')),
+                  const SnackBar(
+                    content: Text('Nota actualizada exitosamente'),
+                  ),
                 );
               }
               Navigator.pop(context);
@@ -1471,7 +1849,11 @@ class NotesView extends ConsumerStatefulWidget {
     );
   }
 
-  static void showNoteDetailsDialog(BuildContext context, WidgetRef ref, {required Note note}) {
+  static void showNoteDetailsDialog(
+    BuildContext context,
+    WidgetRef ref, {
+    required Note note,
+  }) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -1483,7 +1865,7 @@ class NotesView extends ConsumerStatefulWidget {
             Expanded(
               child: Text(
                 note.title,
-                style: const TextStyle(fontWeight: FontWeight.w700),
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
             IconButton(
@@ -1510,7 +1892,9 @@ class NotesView extends ConsumerStatefulWidget {
               styleSheet: MarkdownStyleSheet(
                 p: TextStyle(
                   fontSize: 13,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.85),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.85),
                   height: 1.6,
                 ),
                 // Make links clickable and visible
@@ -1525,7 +1909,8 @@ class NotesView extends ConsumerStatefulWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => NotesView.showAddNoteDialog(context, ref, existingNote: note),
+            onPressed: () =>
+                NotesView.showAddNoteDialog(context, ref, existingNote: note),
             child: const Text('Editar'),
           ),
           TextButton(
@@ -1548,12 +1933,12 @@ class _NotesViewState extends ConsumerState<NotesView> {
     final listBg = isDark ? AppTheme.darkSurface : AppTheme.stSurfaceLow;
     final contentBg = isDark ? AppTheme.darkBg : AppTheme.stSurface;
     final textPrimary = isDark ? AppTheme.darkOnSurface : AppTheme.stOnSurface;
-    final textSecondary =
-        isDark ? AppTheme.darkOnSurfaceVariant : AppTheme.stOnSurfaceVariant;
-    final divider = (isDark
-        ? AppTheme.darkOutlineVariant
-        : AppTheme.stOutlineVariant)
-        .withValues(alpha: 0.10);
+    final textSecondary = isDark
+        ? AppTheme.darkOnSurfaceVariant
+        : AppTheme.stOnSurfaceVariant;
+    final divider =
+        (isDark ? AppTheme.darkOutlineVariant : AppTheme.stOutlineVariant)
+            .withValues(alpha: 0.10);
 
     final rawNotes = ref.watch(noteProvider);
     final q = widget.globalQuery.trim().toLowerCase();
@@ -1592,17 +1977,23 @@ class _NotesViewState extends ConsumerState<NotesView> {
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   child: Row(
                     children: [
-                      Text('NOTAS RECIENTES',
-                          style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.5,
-                              color: textSecondary)),
+                      Text(
+                        'NOTAS RECIENTES',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.5,
+                          color: textSecondary,
+                        ),
+                      ),
                       const Spacer(),
                       GestureDetector(
                         onTap: () => NotesView.showAddNoteDialog(context, ref),
-                        child: Icon(LucideIcons.plus,
-                            size: 16, color: textSecondary),
+                        child: Icon(
+                          LucideIcons.plus,
+                          size: 16,
+                          color: textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -1615,7 +2006,9 @@ class _NotesViewState extends ConsumerState<NotesView> {
                           child: Text(
                             q.isEmpty ? 'No hay notas' : 'Sin resultados',
                             style: TextStyle(
-                                fontSize: 13, color: textSecondary),
+                              fontSize: 13,
+                              color: textSecondary,
+                            ),
                           ),
                         )
                       : ListView.separated(
@@ -1625,34 +2018,32 @@ class _NotesViewState extends ConsumerState<NotesView> {
                               const SizedBox(height: 2),
                           itemBuilder: (ctx, i) {
                             final note = notes[i];
-                            final isActive =
-                                _selectedNote?.id == note.id;
+                            final isActive = _selectedNote?.id == note.id;
                             return GestureDetector(
-                              onTap: () =>
-                                  setState(() => _selectedNote = note),
+                              onTap: () => setState(() => _selectedNote = note),
                               child: Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: isActive
                                       ? (isDark
-                                          ? AppTheme.darkSurfaceLow
-                                          : AppTheme.stSurface)
+                                            ? AppTheme.darkSurfaceLow
+                                            : AppTheme.stSurface)
                                       : Colors.transparent,
                                   borderRadius: BorderRadius.circular(8),
                                   boxShadow: isActive
                                       ? [
                                           BoxShadow(
-                                            color: const Color(0xFF2D3432)
-                                                .withValues(alpha: 0.05),
+                                            color: const Color(
+                                              0xFF2D3432,
+                                            ).withValues(alpha: 0.05),
                                             blurRadius: 8,
                                             offset: const Offset(0, 2),
-                                          )
+                                          ),
                                         ]
                                       : null,
                                 ),
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
                                       children: [
@@ -1683,9 +2074,10 @@ class _NotesViewState extends ConsumerState<NotesView> {
                                     Text(
                                       _makeNotePreview(note.content),
                                       style: TextStyle(
-                                          fontSize: 11,
-                                          color: textSecondary,
-                                          height: 1.4),
+                                        fontSize: 11,
+                                        color: textSecondary,
+                                        height: 1.4,
+                                      ),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -1709,13 +2101,19 @@ class _NotesViewState extends ConsumerState<NotesView> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(LucideIcons.fileText,
-                              size: 32,
-                              color: textSecondary.withValues(alpha: 0.4)),
+                          Icon(
+                            LucideIcons.fileText,
+                            size: 32,
+                            color: textSecondary.withValues(alpha: 0.4),
+                          ),
                           const SizedBox(height: 12),
-                          Text('Selecciona una nota',
-                              style: TextStyle(
-                                  fontSize: 14, color: textSecondary)),
+                          Text(
+                            'Selecciona una nota',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: textSecondary,
+                            ),
+                          ),
                         ],
                       ),
                     )
@@ -1751,166 +2149,410 @@ class _NoteContentPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(48, 48, 48, 80),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Tags row
-          Row(
+    return Row(
+      children: [
+        // ── Main content canvas ──
+        Expanded(
+          child: Stack(
             children: [
+              SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(48, 48, 48, 80),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Tags row (Stitch style)
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.stSecondaryContainer,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'NOTA',
+                            style: GoogleFonts.inter(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.0,
+                              color: AppTheme.stOnSecondaryContainer,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.stTertiaryContainer,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'DEVOPS',
+                            style: GoogleFonts.inter(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.0,
+                              color: AppTheme.stOnTertiaryContainer,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    // Title (Stitch: large, bold)
+                    Text(
+                      note.title,
+                      style: GoogleFonts.inter(
+                        fontSize: 36,
+                        fontWeight: FontWeight.w800,
+                        color: textPrimary,
+                        letterSpacing: -0.5,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Author + date metadata
+                    Row(
+                      children: [
+                        Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppTheme.stSurfaceContainer,
+                          ),
+                          child: Center(
+                            child: Text(
+                              'V',
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Vault',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: textSecondary,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Container(
+                            width: 3,
+                            height: 3,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: textSecondary.withValues(alpha: 0.40),
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          LucideIcons.calendar,
+                          size: 14,
+                          color: textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          DateFormat('d MMM yyyy').format(note.updatedAt),
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Divider(
+                      color: AppTheme.stOutlineVariant.withValues(alpha: 0.10),
+                      height: 1,
+                    ),
+                    const SizedBox(height: 24),
+                    // Content via Markdown
+                    MarkdownBody(
+                      data: note.content.isEmpty
+                          ? '*Sin contenido. Edita la nota para añadir contenido.*'
+                          : note.content,
+                      sizedImageBuilder: _markdownSizedImageBuilder,
+                      onTapLink: (text, href, title) async {
+                        if (href != null) {
+                          final uri = Uri.tryParse(href);
+                          if (uri != null && await canLaunchUrl(uri)) {
+                            await launchUrl(
+                              uri,
+                              mode: LaunchMode.externalApplication,
+                            );
+                          }
+                        }
+                      },
+                      styleSheet: MarkdownStyleSheet(
+                        p: TextStyle(
+                          fontSize: 15,
+                          color: textPrimary.withValues(alpha: 0.88),
+                          height: 1.7,
+                        ),
+                        h1: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                          letterSpacing: -0.3,
+                        ),
+                        h2: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                        code: TextStyle(
+                          fontFamily: 'Courier',
+                          fontSize: 13,
+                          color: AppTheme.stPrimary,
+                          backgroundColor: AppTheme.stSurfaceContainer,
+                        ),
+                        codeblockDecoration: BoxDecoration(
+                          color: isDark
+                              ? AppTheme.darkSurfaceLow
+                              : AppTheme.stSurfaceContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        blockquoteDecoration: BoxDecoration(
+                          border: Border(
+                            left: BorderSide(
+                              color: AppTheme.stPrimary.withValues(alpha: 0.4),
+                              width: 3,
+                            ),
+                          ),
+                          color: AppTheme.stSurfaceLow,
+                        ),
+                        a: TextStyle(
+                          color: AppTheme.stPrimary,
+                          decoration: TextDecoration.underline,
+                          decorationColor: AppTheme.stPrimary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    // Action row
+                    Row(
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: () => NotesView.showAddNoteDialog(
+                            context,
+                            ref,
+                            existingNote: note,
+                          ),
+                          icon: const Icon(LucideIcons.edit2, size: 13),
+                          label: const Text('Editar'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppTheme.stOnSurface,
+                            side: BorderSide(
+                              color: AppTheme.stOutlineVariant.withValues(
+                                alpha: 0.3,
+                              ),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            textStyle: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        OutlinedButton.icon(
+                          onPressed: () => ref
+                              .read(noteProvider.notifier)
+                              .deleteNote(note.id),
+                          icon: const Icon(
+                            LucideIcons.trash2,
+                            size: 13,
+                            color: Color(0xFF9f403d),
+                          ),
+                          label: const Text('Eliminar'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF9f403d),
+                            side: BorderSide(
+                              color: const Color(
+                                0xFF9f403d,
+                              ).withValues(alpha: 0.2),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            textStyle: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // ── Floating Notion-style toolbar ──
+              Positioned(
+                top: 12,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppTheme.darkSurfaceLow
+                          : AppTheme.stSurface,
+                      borderRadius: BorderRadius.circular(9999),
+                      border: Border.all(
+                        color: AppTheme.stOutlineVariant.withValues(
+                          alpha: 0.15,
+                        ),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _ToolbarBtn(icon: LucideIcons.bold, tooltip: 'Bold'),
+                        _ToolbarBtn(
+                          icon: LucideIcons.italic,
+                          tooltip: 'Italic',
+                        ),
+                        _ToolbarBtn(icon: LucideIcons.list, tooltip: 'List'),
+                        Container(
+                          width: 1,
+                          height: 16,
+                          color: AppTheme.stOutlineVariant.withValues(
+                            alpha: 0.30,
+                          ),
+                        ),
+                        _ToolbarBtn(icon: LucideIcons.link2, tooltip: 'Link'),
+                        _ToolbarBtn(icon: LucideIcons.image, tooltip: 'Image'),
+                        _ToolbarBtn(icon: LucideIcons.code2, tooltip: 'Code'),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // ── Right contextual sidebar (Stitch style) ──
+        Container(
+          width: 56,
+          decoration: BoxDecoration(
+            color: isDark ? AppTheme.darkSurface : AppTheme.stSurfaceLow,
+            border: Border(
+              left: BorderSide(
+                color: AppTheme.stOutlineVariant.withValues(alpha: 0.10),
+              ),
+            ),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 24),
+              _SidebarActionBtn(
+                icon: LucideIcons.messageSquare,
+                tooltip: 'Comments',
+              ),
+              const SizedBox(height: 24),
+              _SidebarActionBtn(icon: LucideIcons.clock, tooltip: 'History'),
+              const SizedBox(height: 24),
+              _SidebarActionBtn(icon: LucideIcons.share2, tooltip: 'Share'),
+              const SizedBox(height: 24),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppTheme.stSurfaceContainer,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  'Nota',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
-                    color: AppTheme.stOnSurfaceVariant,
-                  ),
-                ),
+                width: 32,
+                height: 1,
+                color: AppTheme.stOutlineVariant.withValues(alpha: 0.20),
               ),
-              const SizedBox(width: 8),
-              Text(
-                DateFormat('d MMM yyyy').format(note.updatedAt),
-                style: TextStyle(
-                    fontSize: 11,
-                    color: AppTheme.stOnSurfaceVariant),
+              const SizedBox(height: 24),
+              _SidebarActionBtn(
+                icon: LucideIcons.star,
+                tooltip: 'Favorite',
+                filled: false,
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          // Title
-          Text(
-            note.title,
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w800,
-              color: textPrimary,
-              letterSpacing: -0.5,
-              height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Divider(
-            color: AppTheme.stOutlineVariant.withValues(alpha: 0.10),
-            height: 1,
-          ),
-          const SizedBox(height: 24),
-          // Content via Markdown
-          MarkdownBody(
-            data: note.content.isEmpty
-                ? '*Sin contenido. Edita la nota para añadir contenido.*'
-                : note.content,
-            sizedImageBuilder: _markdownSizedImageBuilder,
-            onTapLink: (text, href, title) async {
-              if (href != null) {
-                final uri = Uri.tryParse(href);
-                if (uri != null && await canLaunchUrl(uri)) {
-                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                }
-              }
-            },
-            styleSheet: MarkdownStyleSheet(
-              p: TextStyle(
-                  fontSize: 15,
-                  color: textPrimary.withValues(alpha: 0.88),
-                  height: 1.7),
-              h1: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: textPrimary,
-                  letterSpacing: -0.3),
-              h2: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: textPrimary),
-              code: TextStyle(
-                fontFamily: 'Courier',
-                fontSize: 13,
-                color: AppTheme.stPrimary,
-                backgroundColor:
-                    AppTheme.stSurfaceContainer,
-              ),
-              codeblockDecoration: BoxDecoration(
-                color: isDark
-                    ? AppTheme.darkSurfaceLow
-                    : AppTheme.stSurfaceContainer,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              blockquoteDecoration: BoxDecoration(
-                border: Border(
-                  left: BorderSide(
-                    color: AppTheme.stPrimary.withValues(alpha: 0.4),
-                    width: 3,
-                  ),
-                ),
-                color: AppTheme.stSurfaceLow,
-              ),
-              // Make links more visible and clickable
-              a: TextStyle(
-                color: AppTheme.stPrimary,
-                decoration: TextDecoration.underline,
-                decorationColor: AppTheme.stPrimary,
-              ),
-            ),
-          ),
-          const SizedBox(height: 40),
-          // Action row
-          Row(
-            children: [
-              OutlinedButton.icon(
-                onPressed: () =>
-                    NotesView.showAddNoteDialog(context, ref,
-                        existingNote: note),
-                icon: const Icon(LucideIcons.edit2, size: 13),
-                label: const Text('Editar'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.stOnSurface,
-                  side: BorderSide(
-                    color: AppTheme.stOutlineVariant.withValues(alpha: 0.3),
-                  ),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6)),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
-                  textStyle: const TextStyle(fontSize: 12),
-                ),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton.icon(
-                onPressed: () =>
-                    ref.read(noteProvider.notifier).deleteNote(note.id),
-                icon: const Icon(LucideIcons.trash2,
-                    size: 13, color: Color(0xFF9f403d)),
-                label: const Text('Eliminar'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF9f403d),
-                  side: BorderSide(
-                    color:
-                        const Color(0xFF9f403d).withValues(alpha: 0.2),
-                  ),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6)),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
-                  textStyle: const TextStyle(fontSize: 12),
-                ),
-              ),
-            ],
-          ),
-        ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ToolbarBtn extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+
+  const _ToolbarBtn({required this.icon, required this.tooltip});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(6)),
+        child: IconButton(
+          icon: Icon(icon, size: 16),
+          onPressed: () {},
+          padding: const EdgeInsets.all(6),
+          constraints: const BoxConstraints(),
+          color: AppTheme.stOnSurfaceVariant,
+          splashRadius: 18,
+        ),
       ),
     );
   }
 }
 
+class _SidebarActionBtn extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final bool filled;
+
+  const _SidebarActionBtn({
+    required this.icon,
+    required this.tooltip,
+    this.filled = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        decoration: BoxDecoration(shape: BoxShape.circle),
+        child: IconButton(
+          icon: Icon(icon, size: 18),
+          onPressed: () {},
+          color: AppTheme.stOnSurfaceVariant,
+          splashRadius: 18,
+        ),
+      ),
+    );
+  }
+}
 
 class SettingsView extends ConsumerWidget {
   const SettingsView({super.key});
@@ -1922,7 +2564,10 @@ class SettingsView extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Ajustes', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+          const Text(
+            'Ajustes',
+            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 48),
           _SettingBox(
             title: 'Modo de Tema',
@@ -1933,7 +2578,8 @@ class SettingsView extends ConsumerWidget {
                 DropdownMenuItem(value: ThemeMode.light, child: Text('Claro')),
                 DropdownMenuItem(value: ThemeMode.dark, child: Text('Oscuro')),
               ],
-              onChanged: (v) => ref.read(settingsProvider.notifier).setThemeMode(v!),
+              onChanged: (v) =>
+                  ref.read(settingsProvider.notifier).setThemeMode(v!),
             ),
           ),
           const SizedBox(height: 24),
@@ -1963,7 +2609,7 @@ class SettingsView extends ConsumerWidget {
 void _showPasswordSetDialog(BuildContext context, WidgetRef ref) {
   final c = TextEditingController();
   showDialog(
-    context: context, 
+    context: context,
     builder: (context) => AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       title: const Text('Configurar Contraseña'),
@@ -1973,12 +2619,20 @@ void _showPasswordSetDialog(BuildContext context, WidgetRef ref) {
         decoration: const InputDecoration(hintText: 'Nueva contraseña'),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-        ElevatedButton(onPressed: () {
-          ref.read(settingsProvider.notifier).setMasterPassword(c.text);
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Contraseña configurada')));
-        }, child: const Text('Guardar')),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            ref.read(settingsProvider.notifier).setMasterPassword(c.text);
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Contraseña configurada')),
+            );
+          },
+          child: const Text('Guardar'),
+        ),
       ],
     ),
   );
@@ -1988,7 +2642,11 @@ class _SettingBox extends StatelessWidget {
   final String title;
   final IconData icon;
   final Widget trailing;
-  const _SettingBox({required this.title, required this.icon, required this.trailing});
+  const _SettingBox({
+    required this.title,
+    required this.icon,
+    required this.trailing,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1998,7 +2656,11 @@ class _SettingBox extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.08)),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.06)
+              : Colors.black.withOpacity(0.08),
+        ),
       ),
       child: Row(
         children: [
@@ -2031,8 +2693,11 @@ class TasksView extends ConsumerStatefulWidget {
   @override
   ConsumerState<TasksView> createState() => _TasksViewState();
 
-  static void showAddTaskDialog(BuildContext context, WidgetRef ref,
-      {TaskItem? existing}) {
+  static void showAddTaskDialog(
+    BuildContext context,
+    WidgetRef ref, {
+    TaskItem? existing,
+  }) {
     final id = existing?.id ?? generateTaskId();
     final titleC = TextEditingController(text: existing?.title ?? '');
     final notesC = TextEditingController(text: existing?.notes ?? '');
@@ -2043,26 +2708,31 @@ class TasksView extends ConsumerStatefulWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setLocal) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.teal.withOpacity(0.1),
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
+                child: Icon(
                   LucideIcons.checkCircle2,
                   size: 20,
-                  color: Colors.teal,
+                  color: Theme.of(context).primaryColor,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   existing == null ? 'Nueva Tarea' : 'Editar Tarea',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -2078,7 +2748,9 @@ class TasksView extends ConsumerStatefulWidget {
                     labelText: 'Título de la tarea',
                     hintText: 'Ej: Terminar el reporte',
                     prefixIcon: const Icon(LucideIcons.checkSquare, size: 18),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -2089,7 +2761,9 @@ class TasksView extends ConsumerStatefulWidget {
                     labelText: 'Descripción',
                     hintText: 'Añade detalles sobre esta tarea...',
                     prefixIcon: const Icon(LucideIcons.fileText, size: 18),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -2109,14 +2783,14 @@ class TasksView extends ConsumerStatefulWidget {
                             onPressed: () =>
                                 setLocal(() => isImportant = !isImportant),
                             icon: Icon(
-                              isImportant ? LucideIcons.star : LucideIcons.starOff,
+                              isImportant
+                                  ? LucideIcons.star
+                                  : LucideIcons.starOff,
                               size: 20,
                               color: isImportant
                                   ? const Color(0xFFF59E0B)
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .onSurface
-                                      .withValues(alpha: 0.6),
+                                  : Theme.of(context).colorScheme.onSurface
+                                        .withValues(alpha: 0.6),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -2126,7 +2800,8 @@ class TasksView extends ConsumerStatefulWidget {
                               fontWeight: FontWeight.w500,
                               color: isImportant
                                   ? const Color(0xFFF59E0B)
-                                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                  : Theme.of(context).colorScheme.onSurface
+                                        .withValues(alpha: 0.6),
                             ),
                           ),
                           const Spacer(),
@@ -2139,11 +2814,13 @@ class TasksView extends ConsumerStatefulWidget {
                                 initialDate: dueAt ?? DateTime.now(),
                               );
                               if (picked != null) {
-                                setLocal(() => dueAt = DateTime(
-                                      picked.year,
-                                      picked.month,
-                                      picked.day,
-                                    ));
+                                setLocal(
+                                  () => dueAt = DateTime(
+                                    picked.year,
+                                    picked.month,
+                                    picked.day,
+                                  ),
+                                );
                               }
                             },
                             icon: const Icon(LucideIcons.calendar, size: 14),
@@ -2178,13 +2855,19 @@ class TasksView extends ConsumerStatefulWidget {
               onPressed: () {
                 if (titleC.text.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor ingresa un título para la tarea')),
+                    const SnackBar(
+                      content: Text(
+                        'Por favor ingresa un título para la tarea',
+                      ),
+                    ),
                   );
                   return;
                 }
                 final now = DateTime.now();
                 if (existing == null) {
-                  ref.read(taskProvider.notifier).addTask(
+                  ref
+                      .read(taskProvider.notifier)
+                      .addTask(
                         TaskItem(
                           id: id,
                           title: titleC.text,
@@ -2201,7 +2884,9 @@ class TasksView extends ConsumerStatefulWidget {
                     const SnackBar(content: Text('Tarea creada exitosamente')),
                   );
                 } else {
-                  ref.read(taskProvider.notifier).updateTask(
+                  ref
+                      .read(taskProvider.notifier)
+                      .updateTask(
                         existing.copyWith(
                           title: titleC.text,
                           notes: notesC.text,
@@ -2211,7 +2896,9 @@ class TasksView extends ConsumerStatefulWidget {
                         ),
                       );
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Tarea actualizada exitosamente')),
+                    const SnackBar(
+                      content: Text('Tarea actualizada exitosamente'),
+                    ),
                   );
                 }
                 Navigator.pop(context);
@@ -2238,10 +2925,12 @@ class _TasksViewState extends ConsumerState<TasksView> {
     final listBg = isDark ? AppTheme.darkSurface : AppTheme.stSurfaceLow;
     final contentBg = isDark ? AppTheme.darkBg : AppTheme.stSurface;
     final textPrimary = isDark ? AppTheme.darkOnSurface : AppTheme.stOnSurface;
-    final textSecondary =
-        isDark ? AppTheme.darkOnSurfaceVariant : AppTheme.stOnSurfaceVariant;
-    final divider = (isDark ? AppTheme.darkOutlineVariant : AppTheme.stOutlineVariant)
-        .withValues(alpha: 0.10);
+    final textSecondary = isDark
+        ? AppTheme.darkOnSurfaceVariant
+        : AppTheme.stOnSurfaceVariant;
+    final divider =
+        (isDark ? AppTheme.darkOutlineVariant : AppTheme.stOutlineVariant)
+            .withValues(alpha: 0.10);
 
     final raw = ref.watch(taskProvider);
     final q = widget.globalQuery.trim().toLowerCase();
@@ -2259,9 +2948,10 @@ class _TasksViewState extends ConsumerState<TasksView> {
 
     final filtered = switch (_filter) {
       _TaskFilter.all => filteredByQuery,
-      _TaskFilter.today => filteredByQuery
-          .where((t) => t.dueAt != null && isSameDay(t.dueAt!, today))
-          .toList(),
+      _TaskFilter.today =>
+        filteredByQuery
+            .where((t) => t.dueAt != null && isSameDay(t.dueAt!, today))
+            .toList(),
       _TaskFilter.planned =>
         filteredByQuery.where((t) => t.dueAt != null).toList(),
       _TaskFilter.important =>
@@ -2300,7 +2990,7 @@ class _TasksViewState extends ConsumerState<TasksView> {
                         'TASKS',
                         style: TextStyle(
                           fontSize: 9,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
                           letterSpacing: 1.5,
                           color: textSecondary,
                         ),
@@ -2308,7 +2998,11 @@ class _TasksViewState extends ConsumerState<TasksView> {
                       const Spacer(),
                       GestureDetector(
                         onTap: () => TasksView.showAddTaskDialog(context, ref),
-                        child: Icon(LucideIcons.plus, size: 16, color: textSecondary),
+                        child: Icon(
+                          LucideIcons.plus,
+                          size: 16,
+                          color: textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -2327,22 +3021,26 @@ class _TasksViewState extends ConsumerState<TasksView> {
                       _TaskFilterChip(
                         label: 'Today',
                         isSelected: _filter == _TaskFilter.today,
-                        onTap: () => setState(() => _filter = _TaskFilter.today),
+                        onTap: () =>
+                            setState(() => _filter = _TaskFilter.today),
                       ),
                       _TaskFilterChip(
                         label: 'Planned',
                         isSelected: _filter == _TaskFilter.planned,
-                        onTap: () => setState(() => _filter = _TaskFilter.planned),
+                        onTap: () =>
+                            setState(() => _filter = _TaskFilter.planned),
                       ),
                       _TaskFilterChip(
                         label: 'Important',
                         isSelected: _filter == _TaskFilter.important,
-                        onTap: () => setState(() => _filter = _TaskFilter.important),
+                        onTap: () =>
+                            setState(() => _filter = _TaskFilter.important),
                       ),
                       _TaskFilterChip(
                         label: 'Completed',
                         isSelected: _filter == _TaskFilter.completed,
-                        onTap: () => setState(() => _filter = _TaskFilter.completed),
+                        onTap: () =>
+                            setState(() => _filter = _TaskFilter.completed),
                       ),
                     ],
                   ),
@@ -2353,13 +3051,17 @@ class _TasksViewState extends ConsumerState<TasksView> {
                       ? Center(
                           child: Text(
                             q.isEmpty ? 'No hay tareas' : 'Sin resultados',
-                            style: TextStyle(fontSize: 13, color: textSecondary),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: textSecondary,
+                            ),
                           ),
                         )
                       : ListView.separated(
                           padding: const EdgeInsets.all(8),
                           itemCount: tasks.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 2),
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 2),
                           itemBuilder: (ctx, i) {
                             final task = tasks[i];
                             final isActive = _selected?.id == task.id;
@@ -2370,8 +3072,8 @@ class _TasksViewState extends ConsumerState<TasksView> {
                                 decoration: BoxDecoration(
                                   color: isActive
                                       ? (isDark
-                                          ? AppTheme.darkSurfaceLow
-                                          : AppTheme.stSurface)
+                                            ? AppTheme.darkSurfaceLow
+                                            : AppTheme.stSurface)
                                       : Colors.transparent,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -2379,7 +3081,9 @@ class _TasksViewState extends ConsumerState<TasksView> {
                                   children: [
                                     GestureDetector(
                                       onTap: () {
-                                        ref.read(taskProvider.notifier).updateTask(
+                                        ref
+                                            .read(taskProvider.notifier)
+                                            .updateTask(
                                               task.copyWith(
                                                 isCompleted: !task.isCompleted,
                                                 updatedAt: DateTime.now(),
@@ -2399,7 +3103,8 @@ class _TasksViewState extends ConsumerState<TasksView> {
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Row(
                                             children: [
@@ -2409,19 +3114,27 @@ class _TasksViewState extends ConsumerState<TasksView> {
                                                   style: TextStyle(
                                                     fontSize: 13,
                                                     fontWeight: FontWeight.w600,
-                                                    color: textPrimary.withValues(
-                                                      alpha: task.isCompleted ? 0.5 : 1,
-                                                    ),
+                                                    color: textPrimary
+                                                        .withValues(
+                                                          alpha:
+                                                              task.isCompleted
+                                                              ? 0.5
+                                                              : 1,
+                                                        ),
                                                     decoration: task.isCompleted
-                                                        ? TextDecoration.lineThrough
+                                                        ? TextDecoration
+                                                              .lineThrough
                                                         : TextDecoration.none,
                                                   ),
-                                                  overflow: TextOverflow.ellipsis,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                 ),
                                               ),
                                               if (task.isImportant)
                                                 const Padding(
-                                                  padding: EdgeInsets.only(left: 8.0),
+                                                  padding: EdgeInsets.only(
+                                                    left: 8.0,
+                                                  ),
                                                   child: Icon(
                                                     LucideIcons.star,
                                                     size: 14,
@@ -2432,7 +3145,9 @@ class _TasksViewState extends ConsumerState<TasksView> {
                                           ),
                                           if (task.dueAt != null)
                                             Padding(
-                                              padding: const EdgeInsets.only(top: 4),
+                                              padding: const EdgeInsets.only(
+                                                top: 4,
+                                              ),
                                               child: Text(
                                                 'Vence: ${DateFormat('dd/MM').format(task.dueAt!)}',
                                                 style: TextStyle(
@@ -2462,11 +3177,19 @@ class _TasksViewState extends ConsumerState<TasksView> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(LucideIcons.checkCircle2,
-                              size: 32, color: textSecondary.withValues(alpha: 0.4)),
+                          Icon(
+                            LucideIcons.checkCircle2,
+                            size: 32,
+                            color: textSecondary.withValues(alpha: 0.4),
+                          ),
                           const SizedBox(height: 12),
-                          Text('Selecciona una tarea',
-                              style: TextStyle(fontSize: 14, color: textSecondary)),
+                          Text(
+                            'Selecciona una tarea',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: textSecondary,
+                            ),
+                          ),
                         ],
                       ),
                     )
@@ -2516,7 +3239,11 @@ class _TaskFilterChip extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: fg),
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: fg,
+          ),
         ),
       ),
     );
@@ -2537,7 +3264,9 @@ class _TaskContentPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final borderColor = (isDark ? Colors.white10 : Colors.black.withOpacity(0.07));
+    final borderColor = (isDark
+        ? Colors.white10
+        : Colors.black.withOpacity(0.07));
 
     final completedSteps = task.steps.where((s) => s.isCompleted).length;
     final totalSteps = task.steps.length;
@@ -2550,14 +3279,18 @@ class _TaskContentPanel extends ConsumerWidget {
           Row(
             children: [
               GestureDetector(
-                onTap: () => ref.read(taskProvider.notifier).updateTask(
+                onTap: () => ref
+                    .read(taskProvider.notifier)
+                    .updateTask(
                       task.copyWith(
                         isCompleted: !task.isCompleted,
                         updatedAt: DateTime.now(),
                       ),
                     ),
                 child: Icon(
-                  task.isCompleted ? LucideIcons.checkCircle2 : LucideIcons.circle,
+                  task.isCompleted
+                      ? LucideIcons.checkCircle2
+                      : LucideIcons.circle,
                   size: 18,
                   color: task.isCompleted
                       ? const Color(0xFF22C55E)
@@ -2570,17 +3303,22 @@ class _TaskContentPanel extends ConsumerWidget {
                   task.title,
                   style: TextStyle(
                     fontSize: 30,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     letterSpacing: -0.5,
-                    color: textPrimary.withValues(alpha: task.isCompleted ? 0.55 : 1),
-                    decoration:
-                        task.isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
+                    color: textPrimary.withValues(
+                      alpha: task.isCompleted ? 0.55 : 1,
+                    ),
+                    decoration: task.isCompleted
+                        ? TextDecoration.lineThrough
+                        : TextDecoration.none,
                   ),
                 ),
               ),
               IconButton(
                 tooltip: 'Importante',
-                onPressed: () => ref.read(taskProvider.notifier).updateTask(
+                onPressed: () => ref
+                    .read(taskProvider.notifier)
+                    .updateTask(
                       task.copyWith(
                         isImportant: !task.isImportant,
                         updatedAt: DateTime.now(),
@@ -2596,13 +3334,19 @@ class _TaskContentPanel extends ConsumerWidget {
               ),
               IconButton(
                 tooltip: 'Editar',
-                onPressed: () => TasksView.showAddTaskDialog(context, ref, existing: task),
+                onPressed: () =>
+                    TasksView.showAddTaskDialog(context, ref, existing: task),
                 icon: const Icon(LucideIcons.edit2, size: 16),
               ),
               IconButton(
                 tooltip: 'Eliminar',
-                onPressed: () => ref.read(taskProvider.notifier).deleteTask(task.id),
-                icon: const Icon(LucideIcons.trash2, size: 16, color: Colors.redAccent),
+                onPressed: () =>
+                    ref.read(taskProvider.notifier).deleteTask(task.id),
+                icon: const Icon(
+                  LucideIcons.trash2,
+                  size: 16,
+                  color: Colors.redAccent,
+                ),
               ),
             ],
           ),
@@ -2613,7 +3357,8 @@ class _TaskContentPanel extends ConsumerWidget {
             children: [
               _TaskMetaPill(
                 icon: LucideIcons.clock,
-                label: 'Actualizada: ${DateFormat('d MMM yyyy').format(task.updatedAt)}',
+                label:
+                    'Actualizada: ${DateFormat('d MMM yyyy').format(task.updatedAt)}',
                 borderColor: borderColor,
                 fg: textSecondary,
               ),
@@ -2639,18 +3384,30 @@ class _TaskContentPanel extends ConsumerWidget {
           if (task.notes.trim().isNotEmpty) ...[
             Text(
               'Notas',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: textSecondary),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: textSecondary,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               task.notes,
-              style: TextStyle(fontSize: 14, height: 1.6, color: textPrimary.withValues(alpha: 0.9)),
+              style: TextStyle(
+                fontSize: 14,
+                height: 1.6,
+                color: textPrimary.withValues(alpha: 0.9),
+              ),
             ),
             const SizedBox(height: 18),
           ],
           Text(
             'Pasos',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: textSecondary),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: textSecondary,
+            ),
           ),
           const SizedBox(height: 10),
           Container(
@@ -2712,8 +3469,9 @@ class _TaskStepRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final textPrimary = Theme.of(context).colorScheme.onSurface;
-    final borderColor =
-        (Theme.of(context).brightness == Brightness.dark ? Colors.white10 : Colors.black.withOpacity(0.07));
+    final borderColor = (Theme.of(context).brightness == Brightness.dark
+        ? Colors.white10
+        : Colors.black.withOpacity(0.07));
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -2726,16 +3484,23 @@ class _TaskStepRow extends ConsumerWidget {
             onTap: () {
               final steps = [
                 for (final s in task.steps)
-                  if (s.id == step.id) s.copyWith(isCompleted: !s.isCompleted) else s
+                  if (s.id == step.id)
+                    s.copyWith(isCompleted: !s.isCompleted)
+                  else
+                    s,
               ];
-              ref.read(taskProvider.notifier).updateTask(
+              ref
+                  .read(taskProvider.notifier)
+                  .updateTask(
                     task.copyWith(steps: steps, updatedAt: DateTime.now()),
                   );
             },
             child: Icon(
               step.isCompleted ? LucideIcons.checkSquare : LucideIcons.square,
               size: 16,
-              color: step.isCompleted ? const Color(0xFF22C55E) : textPrimary.withValues(alpha: 0.55),
+              color: step.isCompleted
+                  ? const Color(0xFF22C55E)
+                  : textPrimary.withValues(alpha: 0.55),
             ),
           ),
           const SizedBox(width: 10),
@@ -2744,8 +3509,12 @@ class _TaskStepRow extends ConsumerWidget {
               step.title,
               style: TextStyle(
                 fontSize: 13,
-                color: textPrimary.withValues(alpha: step.isCompleted ? 0.55 : 0.9),
-                decoration: step.isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
+                color: textPrimary.withValues(
+                  alpha: step.isCompleted ? 0.55 : 0.9,
+                ),
+                decoration: step.isCompleted
+                    ? TextDecoration.lineThrough
+                    : TextDecoration.none,
               ),
             ),
           ),
@@ -2753,7 +3522,9 @@ class _TaskStepRow extends ConsumerWidget {
             tooltip: 'Eliminar paso',
             onPressed: () {
               final steps = task.steps.where((s) => s.id != step.id).toList();
-              ref.read(taskProvider.notifier).updateTask(
+              ref
+                  .read(taskProvider.notifier)
+                  .updateTask(
                     task.copyWith(steps: steps, updatedAt: DateTime.now()),
                   );
             },
@@ -2789,7 +3560,9 @@ class _AddStepRowState extends ConsumerState<_AddStepRow> {
       ...widget.task.steps,
       TaskStep(id: generateTaskId(), title: title, isCompleted: false),
     ];
-    ref.read(taskProvider.notifier).updateTask(
+    ref
+        .read(taskProvider.notifier)
+        .updateTask(
           widget.task.copyWith(steps: steps, updatedAt: DateTime.now()),
         );
     _c.clear();
@@ -2797,8 +3570,9 @@ class _AddStepRowState extends ConsumerState<_AddStepRow> {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor =
-        (Theme.of(context).brightness == Brightness.dark ? Colors.white10 : Colors.black.withOpacity(0.07));
+    final borderColor = (Theme.of(context).brightness == Brightness.dark
+        ? Colors.white10
+        : Colors.black.withOpacity(0.07));
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -2875,8 +3649,7 @@ void _insertTextAtSelection(TextEditingController controller, String text) {
   final safeStart = start.clamp(0, fullText.length);
   final safeEnd = end.clamp(0, fullText.length);
 
-  final newText =
-      fullText.replaceRange(safeStart, safeEnd, text);
+  final newText = fullText.replaceRange(safeStart, safeEnd, text);
   controller.value = value.copyWith(
     text: newText,
     selection: TextSelection.collapsed(offset: safeStart + text.length),
@@ -2894,11 +3667,7 @@ Widget _markdownSizedImageBuilder(MarkdownImageConfig config) {
   }
 
   if (uri.scheme == 'file') {
-    return Image.file(
-      File.fromUri(uri),
-      width: width,
-      height: height,
-    );
+    return Image.file(File.fromUri(uri), width: width, height: height);
   }
 
   return Image.network(uri.toString(), width: width, height: height);

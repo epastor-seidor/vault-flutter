@@ -18,14 +18,15 @@ class _LockScreenState extends ConsumerState<LockScreen> {
   bool _initialized = false;
   bool _obscurePassword = true;
 
-  // Stitch DS Tokens
   static const _bg = Color(0xFFF9F9F7);
   static const _surface = Color(0xFFFFFFFF);
   static const _surfaceLow = Color(0xFFF2F4F2);
+  static const _surfaceContainerHigh = Color(0xFFE5E9E6);
   static const _primary = Color(0xFF5F5E5E);
   static const _onSurface = Color(0xFF2D3432);
   static const _onSurfaceVariant = Color(0xFF5A605E);
   static const _outlineVariant = Color(0xFFADB3B0);
+  static const _secondaryContainer = Color(0xFFE5E2DD);
 
   void _unlock() {
     final settings = ref.read(settingsProvider);
@@ -95,60 +96,85 @@ class _LockScreenState extends ConsumerState<LockScreen> {
       backgroundColor: _bg,
       body: Stack(
         children: [
-          // Decorative blobs (Atelier feel)
+          // ── Decorative Atelier blur circles ──
           Positioned(
-            top: 0,
-            right: 0,
+            top: -80,
+            right: -80,
             child: Container(
-              width: 300,
-              height: 300,
+              width: 256,
+              height: 256,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFE5E9E6).withValues(alpha: 0.5),
+                color: _surfaceContainerHigh,
               ),
             ),
           ),
           Positioned(
-            bottom: 0,
-            left: 0,
+            bottom: -120,
+            left: -120,
             child: Container(
-              width: 400,
-              height: 400,
+              width: 384,
+              height: 384,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFE5E2DD).withValues(alpha: 0.4),
+                color: _secondaryContainer,
               ),
             ),
           ),
-          // Main content
+
+          // ── Main content ──
           Center(
             child: SizedBox(
               width: 420,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // ── Branding ──────────────────────────────────
+                  // ── Branding ──
                   Column(
                     children: [
-                      // Lock icon badge
-                      Container(
-                        width: 64,
-                        height: 64,
-                        decoration: BoxDecoration(
-                          color: _surface,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF2D3432).withValues(alpha: 0.06),
-                              blurRadius: 20,
-                              offset: const Offset(0, 4),
+                      // Glow effect behind icon
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  _primary.withValues(alpha: 0.10),
+                                  Colors.transparent,
+                                ],
+                              ),
                             ),
-                          ],
-                          border: Border.all(
-                            color: _outlineVariant.withValues(alpha: 0.10),
                           ),
-                        ),
-                        child: const Icon(LucideIcons.lock, size: 28, color: _primary),
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: _surface,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFF2D3432,
+                                  ).withValues(alpha: 0.06),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                              border: Border.all(
+                                color: _outlineVariant.withValues(alpha: 0.10),
+                              ),
+                            ),
+                            child: const Icon(
+                              LucideIcons.lock,
+                              size: 28,
+                              color: _primary,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 24),
                       Text(
@@ -157,57 +183,66 @@ class _LockScreenState extends ConsumerState<LockScreen> {
                           fontSize: 24,
                           fontWeight: FontWeight.w800,
                           color: _onSurface,
-                          letterSpacing: -0.5,
+                          letterSpacing: -0.02,
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Ingresa tu contraseña maestra para\ndesbloquear tus credenciales y notas.',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          color: _onSurfaceVariant,
-                          height: 1.6,
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: 280,
+                        child: Text(
+                          'Ingresa tu contraseña maestra para desbloquear tus credenciales y notas.',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: _onSurfaceVariant,
+                            height: 1.5,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 48),
 
-                  // ── Form Card ───────────────────────────────
+                  // ── Form Card (Cloud Shadow) ──
                   Container(
                     padding: const EdgeInsets.all(32),
                     decoration: BoxDecoration(
                       color: _surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: _outlineVariant.withValues(alpha: 0.08),
-                      ),
+                      borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF2D3432).withValues(alpha: 0.06),
+                          color: const Color(
+                            0xFF2D3432,
+                          ).withValues(alpha: 0.06),
                           blurRadius: 32,
                           offset: const Offset(0, 12),
                         ),
                       ],
+                      border: Border.all(
+                        color: _outlineVariant.withValues(alpha: 0.05),
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Label
-                        Text(
-                          'CONTRASEÑA MAESTRA',
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.4,
-                            color: _onSurfaceVariant,
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'CONTRASEÑA MAESTRA',
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1.2,
+                                color: _onSurfaceVariant,
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 10),
 
-                        // Password Input — Stitch style: surface-container-low bg, bottom border
+                        // Input with bottom-only border (Stitch style)
                         Container(
                           decoration: BoxDecoration(
                             color: _surfaceLow,
@@ -246,18 +281,19 @@ class _LockScreenState extends ConsumerState<LockScreen> {
                                   _obscurePassword
                                       ? LucideIcons.eye
                                       : LucideIcons.eyeOff,
-                                  size: 17,
+                                  size: 20,
                                   color: _onSurfaceVariant,
                                 ),
                                 onPressed: () => setState(
-                                    () => _obscurePassword = !_obscurePassword),
+                                  () => _obscurePassword = !_obscurePassword,
+                                ),
                               ),
                             ],
                           ),
                         ),
                         const SizedBox(height: 20),
 
-                        // Unlock CTA — rounded-full, primary bg
+                        // Rounded-full primary button
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
@@ -266,9 +302,9 @@ class _LockScreenState extends ConsumerState<LockScreen> {
                               backgroundColor: _primary,
                               foregroundColor: const Color(0xFFFAF7F6),
                               elevation: 0,
-                              shadowColor: Colors.transparent,
+                              shadowColor: _primary.withValues(alpha: 0.10),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(999),
+                                borderRadius: BorderRadius.circular(9999),
                               ),
                               padding: const EdgeInsets.symmetric(vertical: 16),
                             ),
@@ -281,64 +317,90 @@ class _LockScreenState extends ConsumerState<LockScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
 
-                        // Forgot password + dots
-                        Column(
-                          children: [
-                            Center(
-                              child: TextButton(
-                                onPressed: () {},
-                                style: TextButton.styleFrom(
-                                  foregroundColor: _onSurfaceVariant,
-                                  padding: EdgeInsets.zero,
-                                  minimumSize: Size.zero,
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                ),
-                                child: Text(
-                                  'Olvidé mi contraseña',
-                                  style: GoogleFonts.inter(fontSize: 12),
-                                ),
+                        Center(
+                          child: TextButton(
+                            onPressed: () {},
+                            style: TextButton.styleFrom(
+                              foregroundColor: _onSurfaceVariant,
+                              padding: EdgeInsets.zero,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: Text(
+                              'Olvidé mi contraseña',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                            const SizedBox(height: 16),
-                            Center(
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  _Dot(active: true),
-                                  const SizedBox(width: 6),
-                                  const _Dot(),
-                                  const SizedBox(width: 6),
-                                  const _Dot(),
-                                ],
+                          ),
+                        ),
+
+                        // Separator dots
+                        const SizedBox(height: 16),
+                        Center(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 4,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _outlineVariant.withValues(
+                                    alpha: 0.40,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 8),
+                              Container(
+                                width: 4,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _outlineVariant.withValues(
+                                    alpha: 0.40,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                width: 4,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _outlineVariant.withValues(
+                                    alpha: 0.40,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
 
-                  // ── Security badge ──────────────────────────
+                  // ── Security badge ──
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         LucideIcons.shieldCheck,
-                        size: 12,
-                        color: _outlineVariant.withValues(alpha: 0.7),
+                        size: 14,
+                        color: _outlineVariant.withValues(alpha: 0.50),
                       ),
                       const SizedBox(width: 6),
                       Text(
                         'END-TO-END ENCRYPTED',
                         style: GoogleFonts.inter(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.8,
-                          color: _outlineVariant.withValues(alpha: 0.7),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 2.0,
+                          color: _outlineVariant.withValues(alpha: 0.50),
                         ),
                       ),
                     ],
@@ -348,25 +410,6 @@ class _LockScreenState extends ConsumerState<LockScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _Dot extends StatelessWidget {
-  final bool active;
-  const _Dot({this.active = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 5,
-      height: 5,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: active
-            ? const Color(0xFFADB3B0).withValues(alpha: 0.6)
-            : const Color(0xFFADB3B0).withValues(alpha: 0.25),
       ),
     );
   }
