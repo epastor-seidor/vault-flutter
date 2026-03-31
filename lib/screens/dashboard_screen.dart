@@ -20,6 +20,8 @@ import 'package:dev_vault/providers/security_log_provider.dart';
 import 'package:dev_vault/widgets/credential_editor_panel.dart';
 import 'package:dev_vault/widgets/note_properties_panel.dart';
 import 'package:dev_vault/widgets/note_enhanced_view.dart';
+import 'package:dev_vault/widgets/toast_notification.dart';
+import 'package:dev_vault/widgets/onboarding_tour.dart';
 import 'package:dev_vault/services/password_auditor.dart';
 import 'package:dev_vault/services/password_auditor.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -59,10 +61,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   bool _handleGlobalKeyEvent(KeyEvent event) {
     if (event is! KeyDownEvent) return false;
-    if (!HardwareKeyboard.instance.isControlPressed) return false;
-
+    final isCtrl = HardwareKeyboard.instance.isControlPressed;
+    final isShift = HardwareKeyboard.instance.isShiftPressed;
     final key = event.logicalKey;
-    if (key == LogicalKeyboardKey.keyF) {
+
+    // Ctrl+F - Focus search
+    if (isCtrl && key == LogicalKeyboardKey.keyF) {
       _globalSearchFocusNode.requestFocus();
       _globalSearchController.selection = TextSelection(
         baseOffset: 0,
@@ -71,13 +75,74 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       return true;
     }
 
-    if (key == LogicalKeyboardKey.keyL) {
+    // Ctrl+L - Lock vault
+    if (isCtrl && key == LogicalKeyboardKey.keyL) {
       ref.read(lockProvider.notifier).lock();
+      ref
+          .read(toastProvider.notifier)
+          .show('Bóveda bloqueada', type: ToastType.info);
       return true;
     }
 
-    if (key == LogicalKeyboardKey.keyN) {
+    // Ctrl+N - New entry for current section
+    if (isCtrl && !isShift && key == LogicalKeyboardKey.keyN) {
       _handleCreateShortcut();
+      return true;
+    }
+
+    // Ctrl+Shift+C - New credential
+    if (isCtrl && isShift && key == LogicalKeyboardKey.keyC) {
+      VaultView.showAddDialog(context, ref);
+      return true;
+    }
+
+    // Ctrl+Shift+N - New note
+    if (isCtrl && isShift && key == LogicalKeyboardKey.keyN) {
+      NotesView.showAddNoteDialog(context, ref);
+      return true;
+    }
+
+    // Ctrl+Shift+T - New task
+    if (isCtrl && isShift && key == LogicalKeyboardKey.keyT) {
+      TasksView.showAddTaskDialog(context, ref);
+      return true;
+    }
+
+    // Ctrl+E - Export credentials
+    if (isCtrl && key == LogicalKeyboardKey.keyE) {
+      ref
+          .read(toastProvider.notifier)
+          .show('Exportación iniciada', type: ToastType.info);
+      return true;
+    }
+
+    // Ctrl+1/2/3/4 - Navigate sections
+    if (isCtrl && key == LogicalKeyboardKey.digit1) {
+      setState(() => _selectedIndex = 1);
+      return true;
+    }
+    if (isCtrl && key == LogicalKeyboardKey.digit2) {
+      setState(() => _selectedIndex = 2);
+      return true;
+    }
+    if (isCtrl && key == LogicalKeyboardKey.digit3) {
+      setState(() => _selectedIndex = 3);
+      return true;
+    }
+    if (isCtrl && key == LogicalKeyboardKey.digit4) {
+      setState(() => _selectedIndex = 4);
+      return true;
+    }
+
+    // Escape - Close search / back to home
+    if (key == LogicalKeyboardKey.escape) {
+      if (_globalSearchFocusNode.hasFocus) {
+        _globalSearchFocusNode.unfocus();
+        _globalSearchController.clear();
+        setState(() => _globalSearchQuery = '');
+      } else if (_selectedIndex != 0) {
+        setState(() => _selectedIndex = 0);
+      }
       return true;
     }
 
@@ -92,50 +157,126 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         builder: (context, constraints) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           final isCompact = constraints.maxWidth < 1080;
+          final hasSeenOnboarding = ref
+              .watch(settingsProvider)
+              .hasSeenOnboarding;
 
-          return Scaffold(
-            key: _scaffoldKey,
-            backgroundColor: isDark ? AppTheme.darkBg : AppTheme.stBg,
-            drawer: isCompact
-                ? Drawer(child: _buildSidebarContent(isDrawer: true))
-                : null,
-            endDrawer: _buildSecurityDrawer(),
-            body: Column(
-              children: [
-                _buildTopAppBar(isCompact: isCompact),
-                Expanded(
-                  child: Row(
+          return ToastOverlay(
+            child: Scaffold(
+              key: _scaffoldKey,
+              backgroundColor: isDark ? AppTheme.darkBg : AppTheme.stBg,
+              drawer: isCompact
+                  ? Drawer(child: _buildSidebarContent(isDrawer: true))
+                  : null,
+              endDrawer: _buildSecurityDrawer(),
+              body: Stack(
+                children: [
+                  Column(
                     children: [
-                      if (!isCompact)
-                        Container(
-                          width: 220,
-                          decoration: BoxDecoration(
-                            border: Border(
-                              right: BorderSide(
-                                color: Theme.of(context).dividerColor,
-                                width: 1,
+                      _buildTopAppBar(isCompact: isCompact),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            if (!isCompact)
+                              Container(
+                                width: 220,
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    right: BorderSide(
+                                      color: Theme.of(context).dividerColor,
+                                      width: 1,
+                                    ),
+                                  ),
+                                ),
+                                child: _buildSidebarContent(),
+                              ),
+                            Expanded(
+                              child: Container(
+                                color: Theme.of(
+                                  context,
+                                ).scaffoldBackgroundColor,
+                                child: _buildContent(
+                                  isCompact: isCompact,
+                                  globalQuery: _globalSearchQuery,
+                                ),
                               ),
                             ),
-                          ),
-                          child: _buildSidebarContent(),
-                        ),
-                      Expanded(
-                        child: Container(
-                          color: Theme.of(context).scaffoldBackgroundColor,
-                          child: _buildContent(
-                            isCompact: isCompact,
-                            globalQuery: _globalSearchQuery,
-                          ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ),
-              ],
+                  // Onboarding tour overlay
+                  if (!hasSeenOnboarding) _buildOnboardingTour(context),
+                ],
+              ),
             ),
           );
         },
       ),
+    );
+  }
+
+  Widget _buildOnboardingTour(BuildContext context) {
+    final renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null || !renderBox.hasSize) return const SizedBox.shrink();
+
+    final size = renderBox.size;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF1E1E2E) : const Color(0xFFFFFFFF);
+
+    return OnboardingTour(
+      steps: [
+        TourStep(
+          title: 'Bienvenido a DevVault',
+          description:
+              'Tu bóveda segura para credenciales, notas y tareas. Todo almacenado localmente con encriptación.',
+          targetRect: Rect.fromCenter(
+            center: Offset(size.width / 2, 40),
+            width: 200,
+            height: 50,
+          ),
+          tooltipAlignment: Alignment.bottomCenter,
+        ),
+        TourStep(
+          title: 'Navegación rápida',
+          description:
+              'Usa la barra lateral para moverte entre Credenciales, Notas, Tareas y Ajustes. O presiona Ctrl+1, Ctrl+2, Ctrl+3, Ctrl+4.',
+          targetRect: Rect.fromLTWH(0, 60, 220, size.height - 120),
+          tooltipAlignment: Alignment.centerRight,
+        ),
+        TourStep(
+          title: 'Accesos rápidos',
+          description:
+              'Crea credenciales, notas o tareas directamente desde la barra superior. También puedes usar Ctrl+Shift+C, Ctrl+Shift+N, Ctrl+Shift+T.',
+          targetRect: Rect.fromCenter(
+            center: Offset(size.width - 200, 40),
+            width: 300,
+            height: 50,
+          ),
+          tooltipAlignment: Alignment.bottomCenter,
+        ),
+        TourStep(
+          title: '¡Empieza a explorar!',
+          description:
+              'Selecciona una sección para comenzar. Usa Ctrl+F para buscar y Ctrl+L para bloquear la bóveda.',
+          targetRect: Rect.fromCenter(
+            center: Offset(size.width / 2, size.height / 2),
+            width: 300,
+            height: 200,
+          ),
+          tooltipAlignment: Alignment.topCenter,
+        ),
+      ],
+      onComplete: () {
+        ref.read(settingsProvider.notifier).markOnboardingSeen();
+        ref
+            .read(toastProvider.notifier)
+            .show('¡Bienvenido a DevVault!', type: ToastType.success);
+      },
+      onSkip: () {
+        ref.read(settingsProvider.notifier).markOnboardingSeen();
+      },
     );
   }
 
@@ -248,6 +389,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
           ),
           const SizedBox(width: 6),
+          // Quick action buttons
+          _QuickActionBtn(
+            icon: LucideIcons.key,
+            label: 'Credencial',
+            tooltip: 'Ctrl+Shift+C',
+            onPressed: () => VaultView.showAddDialog(context, ref),
+          ),
+          const SizedBox(width: 4),
+          _QuickActionBtn(
+            icon: LucideIcons.fileText,
+            label: 'Nota',
+            tooltip: 'Ctrl+Shift+N',
+            onPressed: () => NotesView.showAddNoteDialog(context, ref),
+          ),
+          const SizedBox(width: 4),
+          _QuickActionBtn(
+            icon: LucideIcons.checkSquare,
+            label: 'Tarea',
+            tooltip: 'Ctrl+Shift+T',
+            onPressed: () => TasksView.showAddTaskDialog(context, ref),
+          ),
+          const SizedBox(width: 8),
           IconButton(
             icon: Icon(
               LucideIcons.refreshCw,
@@ -1792,6 +1955,49 @@ class _VaultViewState extends ConsumerState<VaultView> {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _QuickActionBtn extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  const _QuickActionBtn({
+    required this.icon,
+    required this.label,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Tooltip(
+      message: tooltip,
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 14),
+        label: Text(
+          label,
+          style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isDark
+              ? const Color(0xFF242426)
+              : AppTheme.stSurfaceLow,
+          foregroundColor: isDark
+              ? const Color(0xFFE5E2E1)
+              : AppTheme.stPrimary,
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          minimumSize: const Size(0, 30),
+        ),
       ),
     );
   }

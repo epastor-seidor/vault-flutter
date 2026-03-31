@@ -8,6 +8,7 @@ class SettingsState {
   final bool isEncrypted;
   final bool hasMasterPassword;
   final String? masterPassword;
+  final bool hasSeenOnboarding;
 
   SettingsState({
     required this.themeMode,
@@ -15,6 +16,7 @@ class SettingsState {
     this.isEncrypted = false,
     this.hasMasterPassword = false,
     this.masterPassword,
+    this.hasSeenOnboarding = false,
   });
 
   SettingsState copyWith({
@@ -23,6 +25,7 @@ class SettingsState {
     bool? isEncrypted,
     bool? hasMasterPassword,
     String? masterPassword,
+    bool? hasSeenOnboarding,
   }) {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
@@ -30,6 +33,7 @@ class SettingsState {
       isEncrypted: isEncrypted ?? this.isEncrypted,
       hasMasterPassword: hasMasterPassword ?? this.hasMasterPassword,
       masterPassword: masterPassword ?? this.masterPassword,
+      hasSeenOnboarding: hasSeenOnboarding ?? this.hasSeenOnboarding,
     );
   }
 }
@@ -40,10 +44,14 @@ class SettingsNotifier extends Notifier<SettingsState> {
   @override
   SettingsState build() {
     final themeIndex = _box.get('themeMode', defaultValue: 0) as int;
-    final colorValue = _box.get('accentColor', defaultValue: Colors.blue.value) as int;
+    final colorValue =
+        _box.get('accentColor', defaultValue: Colors.blue.value) as int;
     final isEncrypted = _box.get('isEncrypted', defaultValue: false) as bool;
-    final hasPassword = _box.get('hasMasterPassword', defaultValue: false) as bool;
+    final hasPassword =
+        _box.get('hasMasterPassword', defaultValue: false) as bool;
     final masterPass = _box.get('masterPassword') as String?;
+    final hasSeenOnboarding =
+        _box.get('hasSeenOnboarding', defaultValue: false) as bool;
 
     return SettingsState(
       themeMode: ThemeMode.values[themeIndex],
@@ -51,6 +59,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
       isEncrypted: isEncrypted,
       hasMasterPassword: hasPassword,
       masterPassword: masterPass,
+      hasSeenOnboarding: hasSeenOnboarding,
     );
   }
 
@@ -73,6 +82,11 @@ class SettingsNotifier extends Notifier<SettingsState> {
   void disableMasterPassword() {
     _box.put('hasMasterPassword', false);
     state = state.copyWith(hasMasterPassword: false);
+  }
+
+  void markOnboardingSeen() {
+    _box.put('hasSeenOnboarding', true);
+    state = state.copyWith(hasSeenOnboarding: true);
   }
 }
 

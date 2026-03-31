@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:dev_vault/screens/dashboard_screen.dart';
 import 'package:dev_vault/screens/lock_screen.dart';
 import 'package:dev_vault/theme/app_theme.dart';
@@ -32,19 +35,33 @@ class _BootstrapperState extends State<Bootstrapper> {
 
   Future<void> _init() async {
     try {
-      // 1. Minimum possible window config first
       await windowManager.ensureInitialized();
       await windowManager.setTitle('DevVault');
       await windowManager.show();
       await windowManager.focus();
 
-      // 2. Data sequence
-      await Hive.initFlutter();
+      // Use app documents directory explicitly
+      final appDir = await getApplicationDocumentsDirectory();
+      await Hive.initFlutter(appDir.path);
+
+      // Clean stale lock files from crashed instances
+      final lockFiles = Directory(
+        appDir.path,
+      ).listSync().whereType<File>().where((f) => f.path.endsWith('.lock'));
+      for (final lockFile in lockFiles) {
+        try {
+          await lockFile.delete();
+        } catch (_) {
+          // Ignore if file is in use by another running instance
+        }
+      }
+
+      // Open boxes
       await Hive.openBox('settings');
       await SecurityService.openEncryptedBox('vault');
       await Hive.openBox('notes');
       await Hive.openBox('tasks');
-      
+
       if (mounted) setState(() => _initialized = true);
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
@@ -55,7 +72,9 @@ class _BootstrapperState extends State<Bootstrapper> {
   @override
   Widget build(BuildContext context) {
     if (_error != null) {
-      return MaterialApp(home: Scaffold(body: Center(child: Text('Error Crítico: $_error'))));
+      return MaterialApp(
+        home: Scaffold(body: Center(child: Text('Error Crítico: $_error'))),
+      );
     }
     if (!_initialized) {
       return MaterialApp(
@@ -71,21 +90,24 @@ class _BootstrapperState extends State<Bootstrapper> {
                 const SizedBox(
                   width: 48,
                   height: 48,
-                  child: CircularProgressIndicator(color: Color(0xFF00DC82), strokeWidth: 3),
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF00DC82),
+                    strokeWidth: 3,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 const Text(
                   'DEV VAULT',
                   style: TextStyle(
-                    color: Colors.white, 
-                    fontSize: 12, 
+                    color: Colors.white,
+                    fontSize: 12,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 8,
                   ),
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'Sincronizando seguridad...', 
+                  'Sincronizando seguridad...',
                   style: TextStyle(color: Colors.white38, fontSize: 13),
                 ),
               ],
