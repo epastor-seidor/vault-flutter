@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: transparent; }
+  </style>
+</head>
+<body>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+    <defs>
+      <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#1a1a2e"/>
+        <stop offset="50%" style="stop-color:#16213e"/>
+        <stop offset="100%" style="stop-color:#0f3460"/>
+      </linearGradient>
+      <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#e94560"/>
+        <stop offset="100%" style="stop-color:#c23651"/>
+      </linearGradient>
+      <linearGradient id="lockGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" style="stop-color:#ffffff"/>
+        <stop offset="100%" style="stop-color:#e0e0e0"/>
+      </linearGradient>
+      <filter id="glow">
+        <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+        <feMerge>
+          <feMergeNode in="coloredBlur"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+      <filter id="shadow">
+        <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.3"/>
+      </filter>
+    </defs>
+    <rect x="32" y="32" width="448" height="448" rx="112" fill="url(#bgGrad)" filter="url(#shadow)"/>
+    <rect x="40" y="40" width="432" height="432" rx="104" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+    <path d="M256 120 L360 170 L360 260 C360 330 310 390 256 420 C202 390 152 330 152 260 L152 170 Z" fill="url(#shieldGrad)" filter="url(#glow)" opacity="0.9"/>
+    <path d="M256 130 L350 175 L350 258 C350 322 305 378 256 405 C207 378 162 322 162 258 L162 175 Z" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+    <rect x="216" y="230" width="80" height="70" rx="12" fill="url(#lockGrad)" filter="url(#shadow)"/>
+    <path d="M236 230 L236 200 C236 180 276 180 276 200 L276 230" fill="none" stroke="url(#lockGrad)" stroke-width="12" stroke-linecap="round"/>
+    <circle cx="256" cy="260" r="8" fill="#1a1a2e"/>
+    <rect x="252" y="264" width="8" height="16" rx="4" fill="#1a1a2e"/>
+    <circle cx="120" cy="120" r="4" fill="rgba(233,69,96,0.3)"/>
+    <circle cx="392" cy="120" r="4" fill="rgba(233,69,96,0.3)"/>
+    <circle cx="120" cy="392" r="4" fill="rgba(233,69,96,0.3)"/>
+    <circle cx="392" cy="392" r="4" fill="rgba(233,69,96,0.3)"/>
+  </svg>
+</body>
+</html>
