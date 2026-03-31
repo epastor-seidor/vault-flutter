@@ -653,23 +653,23 @@ class HomeOverview extends ConsumerWidget {
                   icon: LucideIcons.lock,
                   onTap: () {},
                 ),
-                _BentoCard(
-                    span: 1,
-                    color: Colors.orangeAccent,
-                    title: 'Notes',
-                    subtitle: '${notes.length} Snippets',
-                    icon: LucideIcons.pencil,
-                    onTap: () {}),
+              _BentoCard(
+                  span: 1,
+                  color: Colors.orangeAccent,
+                  title: 'Notas',
+                  subtitle: '${notes.length} Notas',
+                  icon: LucideIcons.fileText,
+                  onTap: () {}),
                 _BentoCard(
                     span: 1,
                     color: Colors.tealAccent,
-                    title: 'Security',
-                    subtitle: 'AES-256 Active',
+                    title: 'Seguridad',
+                    subtitle: 'AES-256 Activo',
                     icon: LucideIcons.shieldCheck,
                     onTap: () {}),
                 _RecentListCard(
                   items: vaultItems.take(3).toList(),
-                  title: 'Recent Activity',
+                  title: 'Actividad Reciente',
                 ),
                 _TipsCard(),
               ],
@@ -785,15 +785,15 @@ class _TipsCard extends StatelessWidget {
         children: [
           Icon(LucideIcons.lightbulb, color: Theme.of(context).primaryColor, size: 20),
           const SizedBox(height: 16),
-          Text(
-            'Tip de Seguridad', 
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 14),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Usa contraseñas complejas.', 
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), fontSize: 12),
-          ),
+            Text(
+              'Consejo de Seguridad', 
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Usa contraseñas complejas.', 
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), fontSize: 12),
+            ),
         ],
       ),
     );
@@ -822,38 +822,118 @@ class VaultView extends ConsumerStatefulWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        title: Text(existingItem == null ? 'Nueva Credencial' : 'Editar Credencial'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                LucideIcons.key,
+                size: 20,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                existingItem == null ? 'Nueva Credencial' : 'Editar Credencial',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
         content: SizedBox(
-          width: 400,
+          width: 450,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: titleC, decoration: const InputDecoration(labelText: 'Sitio/Servicio')),
-              TextField(controller: userC, decoration: const InputDecoration(labelText: 'Usuario')),
-              TextField(controller: passC, obscureText: true, decoration: const InputDecoration(labelText: 'Contraseña')),
-              TextField(controller: urlC, decoration: const InputDecoration(labelText: 'URL')),
+              TextField(
+                controller: titleC,
+                decoration: InputDecoration(
+                  labelText: 'Sitio o Servicio',
+                  hintText: 'Ej: Gmail, Netflix, etc.',
+                  prefixIcon: const Icon(LucideIcons.globe, size: 18),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: userC,
+                decoration: InputDecoration(
+                  labelText: 'Usuario o Email',
+                  hintText: 'Tu nombre de usuario',
+                  prefixIcon: const Icon(LucideIcons.user, size: 18),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: passC,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Contraseña',
+                  hintText: 'Tu contraseña segura',
+                  prefixIcon: const Icon(LucideIcons.lock, size: 18),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  suffixIcon: IconButton(
+                    icon: const Icon(LucideIcons.eyeOff, size: 18),
+                    onPressed: () {},
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: urlC,
+                decoration: InputDecoration(
+                  labelText: 'URL (opcional)',
+                  hintText: 'https://ejemplo.com',
+                  prefixIcon: const Icon(LucideIcons.link, size: 18),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-          ElevatedButton(onPressed: () {
-            final item = VaultItem(
-              id: existingItem?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-              title: titleC.text,
-              username: userC.text,
-              password: passC.text,
-              url: urlC.text,
-              updatedAt: DateTime.now(),
-            );
-            if (existingItem == null) {
-              ref.read(vaultProvider.notifier).addItem(item);
-            } else {
-              ref.read(vaultProvider.notifier).updateItem(item);
-            }
-            Navigator.pop(context);
-          }, child: const Text('Guardar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (titleC.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Por favor ingresa el nombre del sitio')),
+                );
+                return;
+              }
+              final item = VaultItem(
+                id: existingItem?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+                title: titleC.text,
+                username: userC.text,
+                password: passC.text,
+                url: urlC.text,
+                updatedAt: DateTime.now(),
+              );
+              if (existingItem == null) {
+                ref.read(vaultProvider.notifier).addItem(item);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Credencial guardada exitosamente')),
+                );
+              } else {
+                ref.read(vaultProvider.notifier).updateItem(item);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Credencial actualizada exitosamente')),
+                );
+              }
+              Navigator.pop(context);
+            },
+            child: const Text('Guardar'),
+          ),
         ],
       ),
     );
@@ -895,20 +975,20 @@ class _VaultViewState extends ConsumerState<VaultView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Credentials', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: textPrimary, letterSpacing: -0.5)),
+            Text('Credenciales', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: textPrimary, letterSpacing: -0.5)),
             const SizedBox(height: 6),
             Text(
-              'Manage your secure access keys and digital identities with encrypted precision. All data is locally stored and end-to-end protected.',
+              'Gestiona tus claves de acceso e identidades digitales con precisión encriptada. Todos los datos se almacenan localmente y están protegidos de extremo a extremo.',
               style: TextStyle(fontSize: 13, color: textSecondary, height: 1.5),
             ),
             const SizedBox(height: 24),
             Row(
               children: [
-                _StatCard(label: 'TOTAL KEYS', value: '${items.length}', cardBg: cardBg, borderColor: borderColor, textPrimary: textPrimary, textSecondary: textSecondary),
+                _StatCard(label: 'CLAVES TOTALES', value: '${items.length}', cardBg: cardBg, borderColor: borderColor, textPrimary: textPrimary, textSecondary: textSecondary),
                 const SizedBox(width: 16),
-                _StatCard(label: 'SECURITY SCORE', value: '98%', badge: 'EXCELLENT', badgeColor: const Color(0xFF22C55E), cardBg: cardBg, borderColor: borderColor, textPrimary: textPrimary, textSecondary: textSecondary),
+                _StatCard(label: 'PUNTAJE DE SEGURIDAD', value: '98%', badge: 'EXCELENTE', badgeColor: const Color(0xFF22C55E), cardBg: cardBg, borderColor: borderColor, textPrimary: textPrimary, textSecondary: textSecondary),
                 const SizedBox(width: 16),
-                _StatCard(label: 'LAST SYNC', value: '2m ago', cardBg: cardBg, borderColor: borderColor, textPrimary: textPrimary, textSecondary: textSecondary),
+                _StatCard(label: 'ÚLTIMA SYNC', value: 'Hace 2 min', cardBg: cardBg, borderColor: borderColor, textPrimary: textPrimary, textSecondary: textSecondary),
               ],
             ),
             const SizedBox(height: 24),
@@ -948,18 +1028,18 @@ class _VaultViewState extends ConsumerState<VaultView> {
                       decoration: BoxDecoration(border: Border(top: BorderSide(color: borderColor))),
                       child: Row(
                         children: [
-                          Text('Showing ${items.length} of ${items.length} entries', style: TextStyle(fontSize: 12, color: textSecondary)),
+                          Text('Mostrando ${items.length} de ${items.length} entradas', style: TextStyle(fontSize: 12, color: textSecondary)),
                           const Spacer(),
                           OutlinedButton(
                             onPressed: null,
                             style: OutlinedButton.styleFrom(side: BorderSide(color: borderColor), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                            child: Text('Previous', style: TextStyle(fontSize: 12, color: textSecondary)),
+                            child: Text('Anterior', style: TextStyle(fontSize: 12, color: textSecondary)),
                           ),
                           const SizedBox(width: 8),
                           OutlinedButton(
                             onPressed: null,
                             style: OutlinedButton.styleFrom(side: BorderSide(color: borderColor), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                            child: Text('Next', style: TextStyle(fontSize: 12, color: textSecondary)),
+                            child: Text('Siguiente', style: TextStyle(fontSize: 12, color: textSecondary)),
                           ),
                         ],
                       ),
@@ -991,14 +1071,14 @@ class _VaultViewState extends ConsumerState<VaultView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Pro Tip: Keyboard Navigation',
+                        Text('Consejo: Navegación con Teclado',
                             style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 color: textPrimary)),
                         const SizedBox(height: 4),
                         Text(
-                            'Press Ctrl+F to search, Ctrl+N for a new entry, Ctrl+L to lock.',
+                            'Presiona Ctrl+F para buscar, Ctrl+N para nueva entrada, Ctrl+L para bloquear.',
                             style: TextStyle(
                                 fontSize: 12, color: textSecondary)),
                       ],
@@ -1278,21 +1358,53 @@ class NotesView extends ConsumerStatefulWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        title: Text(existingNote == null ? 'Nueva Nota' : 'Editar Nota'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                LucideIcons.fileText,
+                size: 20,
+                color: Colors.orange,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                existingNote == null ? 'Nueva Nota' : 'Editar Nota',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
         content: SizedBox(
           width: 500,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: titleC, decoration: const InputDecoration(labelText: 'Título')),
+              TextField(
+                controller: titleC,
+                decoration: InputDecoration(
+                  labelText: 'Título',
+                  hintText: 'Ej: Ideas de proyecto',
+                  prefixIcon: const Icon(LucideIcons.type, size: 18),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
               const SizedBox(height: 16),
               TextField(
                 controller: contentC,
                 maxLines: 6,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Contenido',
-                  hintText: 'Tip: también puedes pegar imágenes con el botón de abajo',
+                  hintText: 'Escribe tus ideas aquí...\nTip: Las URLs serán clickeables automáticamente',
+                  prefixIcon: const Icon(LucideIcons.fileText, size: 18),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 enableInteractiveSelection: true,
                 toolbarOptions: const ToolbarOptions(
@@ -1319,23 +1431,41 @@ class NotesView extends ConsumerStatefulWidget {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-          ElevatedButton(onPressed: () {
-            if (existingNote == null) {
-              ref.read(noteProvider.notifier).addNote(Note(
-                id: noteId,
-                title: titleC.text,
-                content: contentC.text,
-                createdAt: DateTime.now(),
-                updatedAt: DateTime.now(),
-              ));
-            } else {
-              ref.read(noteProvider.notifier).updateNote(existingNote.copyWith(
-                title: titleC.text, content: contentC.text, updatedAt: DateTime.now(),
-              ));
-            }
-            Navigator.pop(context);
-          }, child: const Text('Guardar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (titleC.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Por favor ingresa un título')),
+                );
+                return;
+              }
+              if (existingNote == null) {
+                ref.read(noteProvider.notifier).addNote(Note(
+                  id: noteId,
+                  title: titleC.text,
+                  content: contentC.text,
+                  createdAt: DateTime.now(),
+                  updatedAt: DateTime.now(),
+                ));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Nota creada exitosamente')),
+                );
+              } else {
+                ref.read(noteProvider.notifier).updateNote(existingNote.copyWith(
+                  title: titleC.text, content: contentC.text, updatedAt: DateTime.now(),
+                ));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Nota actualizada exitosamente')),
+                );
+              }
+              Navigator.pop(context);
+            },
+            child: const Text('Guardar'),
+          ),
         ],
       ),
     );
@@ -1462,14 +1592,12 @@ class _NotesViewState extends ConsumerState<NotesView> {
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   child: Row(
                     children: [
-                      Text(
-                        'RECENT NOTES',
-                        style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.5,
-                            color: textSecondary),
-                      ),
+                      Text('NOTAS RECIENTES',
+                          style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.5,
+                              color: textSecondary)),
                       const Spacer(),
                       GestureDetector(
                         onTap: () => NotesView.showAddNoteDialog(context, ref),
@@ -1915,8 +2043,30 @@ class TasksView extends ConsumerStatefulWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setLocal) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-          title: Text(existing == null ? 'Nueva Tarea' : 'Editar Tarea'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.teal.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  LucideIcons.checkCircle2,
+                  size: 20,
+                  color: Colors.teal,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  existing == null ? 'Nueva Tarea' : 'Editar Tarea',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
           content: SizedBox(
             width: 520,
             child: Column(
@@ -1924,67 +2074,97 @@ class TasksView extends ConsumerStatefulWidget {
               children: [
                 TextField(
                   controller: titleC,
-                  decoration: const InputDecoration(labelText: 'Título'),
+                  decoration: InputDecoration(
+                    labelText: 'Título de la tarea',
+                    hintText: 'Ej: Terminar el reporte',
+                    prefixIcon: const Icon(LucideIcons.checkSquare, size: 18),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 TextField(
                   controller: notesC,
                   maxLines: 4,
-                  decoration: const InputDecoration(labelText: 'Notas'),
+                  decoration: InputDecoration(
+                    labelText: 'Descripción',
+                    hintText: 'Añade detalles sobre esta tarea...',
+                    prefixIcon: const Icon(LucideIcons.fileText, size: 18),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    IconButton(
-                      tooltip: 'Importante',
-                      onPressed: () =>
-                          setLocal(() => isImportant = !isImportant),
-                      icon: Icon(
-                        isImportant ? LucideIcons.star : LucideIcons.starOff,
-                        size: 18,
-                        color: isImportant
-                            ? const Color(0xFFF59E0B)
-                            : Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.6),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime(2100),
-                            initialDate: dueAt ?? DateTime.now(),
-                          );
-                          if (picked != null) {
-                            setLocal(() => dueAt = DateTime(
-                                  picked.year,
-                                  picked.month,
-                                  picked.day,
-                                ));
-                          }
-                        },
-                        icon: const Icon(LucideIcons.calendar, size: 14),
-                        label: Text(
-                          dueAt == null
-                              ? 'Agregar fecha límite'
-                              : 'Vence: ${DateFormat('dd/MM/yyyy').format(dueAt!)}',
-                        ),
-                      ),
-                    ),
-                    if (dueAt != null) ...[
-                      const SizedBox(width: 8),
-                      IconButton(
-                        tooltip: 'Quitar fecha',
-                        onPressed: () => setLocal(() => dueAt = null),
-                        icon: const Icon(LucideIcons.x, size: 16),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          IconButton(
+                            tooltip: 'Marcar como importante',
+                            onPressed: () =>
+                                setLocal(() => isImportant = !isImportant),
+                            icon: Icon(
+                              isImportant ? LucideIcons.star : LucideIcons.starOff,
+                              size: 20,
+                              color: isImportant
+                                  ? const Color(0xFFF59E0B)
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withValues(alpha: 0.6),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            isImportant ? 'Importante' : 'No importante',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              color: isImportant
+                                  ? const Color(0xFFF59E0B)
+                                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                            ),
+                          ),
+                          const Spacer(),
+                          OutlinedButton.icon(
+                            onPressed: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                firstDate: DateTime(2000),
+                                lastDate: DateTime(2100),
+                                initialDate: dueAt ?? DateTime.now(),
+                              );
+                              if (picked != null) {
+                                setLocal(() => dueAt = DateTime(
+                                      picked.year,
+                                      picked.month,
+                                      picked.day,
+                                    ));
+                              }
+                            },
+                            icon: const Icon(LucideIcons.calendar, size: 14),
+                            label: Text(
+                              dueAt == null
+                                  ? 'Agregar fecha'
+                                  : 'Vence: ${DateFormat('dd/MM/yyyy').format(dueAt!)}',
+                            ),
+                          ),
+                          if (dueAt != null) ...[
+                            const SizedBox(width: 8),
+                            IconButton(
+                              tooltip: 'Quitar fecha',
+                              onPressed: () => setLocal(() => dueAt = null),
+                              icon: const Icon(LucideIcons.x, size: 16),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -1996,6 +2176,12 @@ class TasksView extends ConsumerStatefulWidget {
             ),
             ElevatedButton(
               onPressed: () {
+                if (titleC.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Por favor ingresa un título para la tarea')),
+                  );
+                  return;
+                }
                 final now = DateTime.now();
                 if (existing == null) {
                   ref.read(taskProvider.notifier).addTask(
@@ -2011,6 +2197,9 @@ class TasksView extends ConsumerStatefulWidget {
                           steps: const [],
                         ),
                       );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Tarea creada exitosamente')),
+                  );
                 } else {
                   ref.read(taskProvider.notifier).updateTask(
                         existing.copyWith(
@@ -2021,6 +2210,9 @@ class TasksView extends ConsumerStatefulWidget {
                           updatedAt: now,
                         ),
                       );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Tarea actualizada exitosamente')),
+                  );
                 }
                 Navigator.pop(context);
               },
