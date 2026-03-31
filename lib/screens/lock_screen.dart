@@ -178,7 +178,7 @@ class _LockScreenState extends ConsumerState<LockScreen> {
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        'Vault',
+                        'DevVault',
                         style: GoogleFonts.inter(
                           fontSize: 24,
                           fontWeight: FontWeight.w800,

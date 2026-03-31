@@ -6,6 +6,8 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:dev_vault/models/vault_item.dart';
 import 'package:dev_vault/providers/vault_provider.dart';
 import 'package:dev_vault/theme/app_theme.dart';
+import 'package:dev_vault/services/password_generator.dart';
+import 'package:dev_vault/services/password_auditor.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class CredentialEditorPanel extends ConsumerStatefulWidget {
@@ -31,6 +33,13 @@ class _CredentialEditorPanelState extends ConsumerState<CredentialEditorPanel> {
   late TextEditingController _notesC;
   bool _showPassword = false;
   bool _hasChanges = false;
+  int _passwordScore = 0;
+  bool _showGenerator = false;
+  int _genLength = 16;
+  bool _genUpper = true;
+  bool _genLower = true;
+  bool _genDigits = true;
+  bool _genSymbols = true;
 
   @override
   void initState() {
@@ -42,19 +51,30 @@ class _CredentialEditorPanelState extends ConsumerState<CredentialEditorPanel> {
     _notesC = TextEditingController(text: widget.item.notes ?? '');
     _titleC.addListener(() => setState(() => _hasChanges = true));
     _userC.addListener(() => setState(() => _hasChanges = true));
-    _passC.addListener(() => setState(() => _hasChanges = true));
+    _passC.addListener(() => _onPasswordChange());
     _urlC.addListener(() => setState(() => _hasChanges = true));
     _notesC.addListener(() => setState(() => _hasChanges = true));
+    _passwordScore = PasswordAuditor.scorePassword(_passC.text);
   }
 
-  @override
-  void dispose() {
-    _titleC.dispose();
-    _userC.dispose();
-    _passC.dispose();
-    _urlC.dispose();
-    _notesC.dispose();
-    super.dispose();
+  void _onPasswordChange() {
+    setState(() {
+      _hasChanges = true;
+      _passwordScore = PasswordAuditor.scorePassword(_passC.text);
+    });
+  }
+
+  void _generatePassword() {
+    final pw = PasswordGenerator.generate(
+      length: _genLength,
+      includeUppercase: _genUpper,
+      includeLowercase: _genLower,
+      includeDigits: _genDigits,
+      includeSymbols: _genSymbols,
+    );
+    _passC.text = pw;
+    _passwordScore = PasswordAuditor.scorePassword(pw);
+    _hasChanges = true;
   }
 
   void _save() {
@@ -73,6 +93,13 @@ class _CredentialEditorPanelState extends ConsumerState<CredentialEditorPanel> {
   void _delete() {
     ref.read(vaultProvider.notifier).deleteItem(widget.item.id);
     widget.onClose();
+  }
+
+  Color get _scoreColor {
+    if (_passwordScore >= 80) return const Color(0xFF22C55E);
+    if (_passwordScore >= 60) return const Color(0xFFEAB308);
+    if (_passwordScore >= 40) return const Color(0xFFF97316);
+    return const Color(0xFFEF4444);
   }
 
   @override
@@ -239,16 +266,93 @@ class _CredentialEditorPanelState extends ConsumerState<CredentialEditorPanel> {
 
                   const SizedBox(height: 40),
 
-                  // Core Data section
-                  _EditorField(
-                    label: 'USUARIO',
-                    icon: LucideIcons.user,
-                    controller: _userC,
-                    onSurfaceVariant: onSurfaceVariant,
-                    outlineVariant: outlineVariant,
-                    primary: primary,
-                    onSurface: onSurface,
-                    isMono: false,
+                  // User field with copy button
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'USUARIO',
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.5,
+                              color: onSurfaceVariant,
+                            ),
+                          ),
+                          if (_userC.text.isNotEmpty)
+                            IconButton(
+                              icon: Icon(
+                                LucideIcons.copy,
+                                size: 14,
+                                color: primary,
+                              ),
+                              onPressed: () {
+                                Clipboard.setData(
+                                  ClipboardData(text: _userC.text),
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Usuario copiado',
+                                      style: GoogleFonts.inter(fontSize: 12),
+                                    ),
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    duration: const Duration(seconds: 1),
+                                  ),
+                                );
+                              },
+                              tooltip: 'Copiar usuario',
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(left: 12),
+                              child: Icon(
+                                LucideIcons.user,
+                                size: 18,
+                                color: outlineVariant,
+                              ),
+                            ),
+                            Expanded(
+                              child: TextField(
+                                controller: _userC,
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  color: onSurface,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                decoration: InputDecoration(
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 14,
+                                  ),
+                                  isDense: true,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        height: 1,
+                        color: outlineVariant.withValues(alpha: 0.20),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 28),
@@ -270,7 +374,9 @@ class _CredentialEditorPanelState extends ConsumerState<CredentialEditorPanel> {
                             ),
                           ),
                           TextButton(
-                            onPressed: () {},
+                            onPressed: () => setState(
+                              () => _showGenerator = !_showGenerator,
+                            ),
                             style: TextButton.styleFrom(
                               foregroundColor: primary,
                               padding: EdgeInsets.zero,
@@ -373,37 +479,170 @@ class _CredentialEditorPanelState extends ConsumerState<CredentialEditorPanel> {
                           ],
                         ),
                       ),
-                      // Strength bar
+                      // Strength bar (dynamic)
                       const SizedBox(height: 8),
                       Row(
                         children: [
                           Expanded(
                             child: Row(
                               children: [
-                                _StrengthBar(filled: true, color: primary),
-                                const SizedBox(width: 4),
-                                _StrengthBar(filled: true, color: primary),
-                                const SizedBox(width: 4),
-                                _StrengthBar(filled: true, color: primary),
+                                _StrengthBar(
+                                  filled: _passwordScore >= 20,
+                                  color: _scoreColor,
+                                ),
                                 const SizedBox(width: 4),
                                 _StrengthBar(
-                                  filled: false,
-                                  color: outlineVariant,
+                                  filled: _passwordScore >= 40,
+                                  color: _scoreColor,
+                                ),
+                                const SizedBox(width: 4),
+                                _StrengthBar(
+                                  filled: _passwordScore >= 60,
+                                  color: _scoreColor,
+                                ),
+                                const SizedBox(width: 4),
+                                _StrengthBar(
+                                  filled: _passwordScore >= 80,
+                                  color: _scoreColor,
                                 ),
                               ],
                             ),
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Seguridad fuerte',
+                            PasswordAuditor.strengthLabel(_passwordScore),
                             style: GoogleFonts.inter(
                               fontSize: 10,
                               fontStyle: FontStyle.italic,
-                              color: onSurfaceVariant,
+                              color: _scoreColor,
                             ),
                           ),
                         ],
                       ),
+
+                      // Password generator panel
+                      if (_showGenerator) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: surfaceContainer,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'GENERADOR',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 1.5,
+                                      color: onSurfaceVariant,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(LucideIcons.x, size: 14),
+                                    onPressed: () =>
+                                        setState(() => _showGenerator = false),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    color: onSurfaceVariant,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              // Length slider
+                              Row(
+                                children: [
+                                  Text(
+                                    'Longitud: $_genLength',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      color: onSurface,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Slider(
+                                      value: _genLength.toDouble(),
+                                      min: 8,
+                                      max: 64,
+                                      divisions: 56,
+                                      onChanged: (v) => setState(
+                                        () => _genLength = v.round(),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              // Character toggles
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 4,
+                                children: [
+                                  _GenToggle(
+                                    label: 'ABC',
+                                    value: _genUpper,
+                                    onChanged: (v) =>
+                                        setState(() => _genUpper = v),
+                                  ),
+                                  _GenToggle(
+                                    label: 'abc',
+                                    value: _genLower,
+                                    onChanged: (v) =>
+                                        setState(() => _genLower = v),
+                                  ),
+                                  _GenToggle(
+                                    label: '123',
+                                    value: _genDigits,
+                                    onChanged: (v) =>
+                                        setState(() => _genDigits = v),
+                                  ),
+                                  _GenToggle(
+                                    label: '#@!',
+                                    value: _genSymbols,
+                                    onChanged: (v) =>
+                                        setState(() => _genSymbols = v),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: _generatePassword,
+                                  icon: const Icon(
+                                    LucideIcons.refreshCw,
+                                    size: 14,
+                                  ),
+                                  label: Text(
+                                    'Generar',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primary,
+                                    foregroundColor: onPrimary,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
                   ),
 
@@ -709,6 +948,40 @@ class _StrengthBar extends StatelessWidget {
         decoration: BoxDecoration(
           color: filled ? color : color.withValues(alpha: 0.30),
           borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+    );
+  }
+}
+
+class _GenToggle extends StatelessWidget {
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _GenToggle({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: value ? const Color(0xFF5F5E5E) : const Color(0xFFE5E9E6),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            color: value ? const Color(0xFFFAF7F6) : const Color(0xFF5A605E),
+          ),
         ),
       ),
     );

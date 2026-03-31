@@ -6,7 +6,9 @@ class VaultItem {
   final String? password;
   final String? category;
   final DateTime updatedAt;
+  final DateTime createdAt;
   final String? notes;
+  final bool isFavorite;
 
   VaultItem({
     required this.id,
@@ -16,7 +18,9 @@ class VaultItem {
     this.password,
     this.category,
     required this.updatedAt,
+    required this.createdAt,
     this.notes,
+    this.isFavorite = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -28,7 +32,9 @@ class VaultItem {
       'password': password,
       'category': category,
       'updatedAt': updatedAt.toIso8601String(),
+      'createdAt': createdAt.toIso8601String(),
       'notes': notes,
+      'isFavorite': isFavorite,
     };
   }
 
@@ -41,7 +47,11 @@ class VaultItem {
       password: map['password'],
       category: map['category'],
       updatedAt: DateTime.parse(map['updatedAt']),
+      createdAt: map['createdAt'] != null
+          ? DateTime.parse(map['createdAt'])
+          : DateTime.parse(map['updatedAt']),
       notes: map['notes'],
+      isFavorite: map['isFavorite'] ?? false,
     );
   }
 
@@ -53,7 +63,9 @@ class VaultItem {
     String? password,
     String? category,
     DateTime? updatedAt,
+    DateTime? createdAt,
     String? notes,
+    bool? isFavorite,
   }) {
     return VaultItem(
       id: id ?? this.id,
@@ -63,7 +75,9 @@ class VaultItem {
       password: password ?? this.password,
       category: category ?? this.category,
       updatedAt: updatedAt ?? this.updatedAt,
+      createdAt: createdAt ?? this.createdAt,
       notes: notes ?? this.notes,
+      isFavorite: isFavorite ?? this.isFavorite,
     );
   }
 }

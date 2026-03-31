@@ -19,6 +19,8 @@ import 'package:dev_vault/providers/security_log_provider.dart';
 import 'package:dev_vault/widgets/credential_editor_panel.dart';
 import 'package:dev_vault/widgets/note_properties_panel.dart';
 import 'package:dev_vault/widgets/note_enhanced_view.dart';
+import 'package:dev_vault/services/password_auditor.dart';
+import 'package:dev_vault/services/password_auditor.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter/services.dart';
@@ -160,11 +162,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     // Stitch: glassy top bar with ghost border, bg/80 + blur
     final bg = isDark ? const Color(0xFF141414) : const Color(0xFFF9F9F7);
     final crumb = switch (_selectedIndex) {
-      1 => 'Credentials',
-      2 => 'Notes',
-      3 => 'Tasks',
-      4 => 'Settings',
-      _ => 'Home',
+      1 => 'Credenciales',
+      2 => 'Notas',
+      3 => 'Tareas',
+      4 => 'Ajustes',
+      _ => 'Inicio',
     };
 
     return Container(
@@ -274,7 +276,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               minimumSize: const Size(0, 34),
             ),
             child: const Text(
-              'New Item',
+              'Nuevo',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
             ),
           ),
@@ -332,7 +334,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               children: [
                 _SidebarItem(
                   icon: LucideIcons.key,
-                  label: 'Credentials',
+                  label: 'Credenciales',
                   isSelected: _selectedIndex == 1,
                   onTap: () {
                     setState(() => _selectedIndex = 1);
@@ -341,7 +343,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
                 _SidebarItem(
                   icon: LucideIcons.fileText,
-                  label: 'Notes',
+                  label: 'Notas',
                   isSelected: _selectedIndex == 2,
                   onTap: () {
                     setState(() => _selectedIndex = 2);
@@ -350,7 +352,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
                 _SidebarItem(
                   icon: LucideIcons.checkCircle2,
-                  label: 'Tasks',
+                  label: 'Tareas',
                   isSelected: _selectedIndex == 3,
                   onTap: () {
                     setState(() => _selectedIndex = 3);
@@ -369,7 +371,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         _SidebarItem(
           icon: LucideIcons.settings2,
-          label: 'Settings',
+          label: 'Ajustes',
           isSelected: _selectedIndex == 4,
           onTap: () {
             setState(() => _selectedIndex = 4);
@@ -378,7 +380,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         _SidebarItem(
           icon: LucideIcons.lock,
-          label: 'Lock',
+          label: 'Bloquear',
           isSelected: false,
           onTap: () {
             ref.read(lockProvider.notifier).lock();
@@ -847,6 +849,7 @@ class VaultView extends ConsumerStatefulWidget {
                 password: passC.text,
                 url: urlC.text,
                 updatedAt: DateTime.now(),
+                createdAt: existingItem?.createdAt ?? DateTime.now(),
               );
               if (existingItem == null) {
                 ref.read(vaultProvider.notifier).addItem(item);
@@ -876,6 +879,18 @@ class VaultView extends ConsumerStatefulWidget {
 class _VaultViewState extends ConsumerState<VaultView> {
   VaultItem? _editingItem;
   bool _showGridView = false;
+  String _selectedCategory = 'Todas';
+  String _sortMode = 'Fecha';
+  bool _showFavoritesOnly = false;
+
+  String _relativeTime(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'Ahora';
+    if (diff.inMinutes < 60) return 'Hace ${diff.inMinutes} min';
+    if (diff.inHours < 24) return 'Hace ${diff.inHours}h';
+    if (diff.inDays < 7) return 'Hace ${diff.inDays}d';
+    return '${dt.day}/${dt.month}/${dt.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -893,7 +908,7 @@ class _VaultViewState extends ConsumerState<VaultView> {
     final rawItems = ref.watch(vaultProvider);
     final q = widget.globalQuery.trim().toLowerCase();
 
-    final filtered = q.isEmpty
+    var items = q.isEmpty
         ? rawItems
         : rawItems.where((i) {
             final titleMatch = i.title.toLowerCase().contains(q);
@@ -901,8 +916,44 @@ class _VaultViewState extends ConsumerState<VaultView> {
             return titleMatch || userMatch;
           }).toList();
 
-    final items = [...filtered]
-      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    // Filter by category
+    if (_selectedCategory != 'Todas') {
+      items = items.where((i) => i.category == _selectedCategory).toList();
+    }
+
+    // Filter favorites
+    if (_showFavoritesOnly) {
+      items = items.where((i) => i.isFavorite).toList();
+    }
+
+    // Sort
+    items = [...items];
+    switch (_sortMode) {
+      case 'Nombre A-Z':
+        items.sort((a, b) => a.title.compareTo(b.title));
+        break;
+      case 'Nombre Z-A':
+        items.sort((a, b) => b.title.compareTo(a.title));
+        break;
+      case 'Categoría':
+        items.sort((a, b) => (a.category ?? '').compareTo(b.category ?? ''));
+        break;
+      case 'Fecha':
+      default:
+        items.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    }
+
+    // Favorites first
+    items.sort((a, b) {
+      if (a.isFavorite && !b.isFavorite) return -1;
+      if (!a.isFavorite && b.isFavorite) return 1;
+      return 0;
+    });
+
+    // Audit
+    final securityScore = PasswordAuditor.calculateOverallSecurityScore(items);
+    final weakPasswords = PasswordAuditor.findWeakPasswords(items);
+    final duplicateGroups = PasswordAuditor.findDuplicatePasswords(items);
 
     return Stack(
       children: [
@@ -920,7 +971,7 @@ class _VaultViewState extends ConsumerState<VaultView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Credentials',
+                          'Credenciales',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.w600,
@@ -992,9 +1043,15 @@ class _VaultViewState extends ConsumerState<VaultView> {
                     const SizedBox(width: 16),
                     _StatCard(
                       label: 'PUNTAJE DE SEGURIDAD',
-                      value: '98%',
-                      badge: 'EXCELENTE',
-                      badgeColor: const Color(0xFF22C55E),
+                      value: '$securityScore%',
+                      badge: PasswordAuditor.strengthLabel(
+                        securityScore,
+                      ).toUpperCase(),
+                      badgeColor: securityScore >= 80
+                          ? const Color(0xFF22C55E)
+                          : securityScore >= 60
+                          ? const Color(0xFFEAB308)
+                          : const Color(0xFFEF4444),
                       cardBg: cardBg,
                       borderColor: borderColor,
                       textPrimary: textPrimary,
@@ -1012,6 +1069,194 @@ class _VaultViewState extends ConsumerState<VaultView> {
                   ],
                 ),
                 const SizedBox(height: 24),
+                // ── Filters & Sorting ──
+                Row(
+                  children: [
+                    // Category chips
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _FilterChip(
+                              label: 'Todas',
+                              selected: _selectedCategory == 'Todas',
+                              onTap: () =>
+                                  setState(() => _selectedCategory = 'Todas'),
+                            ),
+                            const SizedBox(width: 6),
+                            _FilterChip(
+                              label: 'Login',
+                              selected: _selectedCategory == 'Login',
+                              onTap: () =>
+                                  setState(() => _selectedCategory = 'Login'),
+                            ),
+                            const SizedBox(width: 6),
+                            _FilterChip(
+                              label: 'API Key',
+                              selected: _selectedCategory == 'API Key',
+                              onTap: () =>
+                                  setState(() => _selectedCategory = 'API Key'),
+                            ),
+                            const SizedBox(width: 6),
+                            _FilterChip(
+                              label: 'Database',
+                              selected: _selectedCategory == 'Database',
+                              onTap: () => setState(
+                                () => _selectedCategory = 'Database',
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            _FilterChip(
+                              label: 'Email',
+                              selected: _selectedCategory == 'Email',
+                              onTap: () =>
+                                  setState(() => _selectedCategory = 'Email'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Sort dropdown
+                    Container(
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppTheme.darkSurfaceLow
+                            : AppTheme.stSurfaceLow,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: DropdownButton<String>(
+                        value: _sortMode,
+                        underline: const SizedBox(),
+                        icon: Icon(
+                          LucideIcons.arrowUpDown,
+                          size: 14,
+                          color: textSecondary,
+                        ),
+                        items:
+                            ['Fecha', 'Nombre A-Z', 'Nombre Z-A', 'Categoría']
+                                .map(
+                                  (m) => DropdownMenuItem(
+                                    value: m,
+                                    child: Text(
+                                      m,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        color: textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged: (v) => setState(() => _sortMode = v!),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Favorites toggle
+                    GestureDetector(
+                      onTap: () => setState(
+                        () => _showFavoritesOnly = !_showFavoritesOnly,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _showFavoritesOnly
+                              ? const Color(0xFFF59E0B).withValues(alpha: 0.15)
+                              : (isDark
+                                    ? AppTheme.darkSurfaceLow
+                                    : AppTheme.stSurfaceLow),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _showFavoritesOnly
+                                  ? LucideIcons.star
+                                  : LucideIcons.starOff,
+                              size: 14,
+                              color: _showFavoritesOnly
+                                  ? const Color(0xFFF59E0B)
+                                  : textSecondary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Fav',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: _showFavoritesOnly
+                                    ? const Color(0xFFF59E0B)
+                                    : textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Audit warnings
+                if (weakPasswords.isNotEmpty || duplicateGroups.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEF4444).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: const Color(0xFFEF4444).withValues(alpha: 0.20),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              LucideIcons.alertTriangle,
+                              size: 14,
+                              color: const Color(0xFFEF4444),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'ALERTA DE SEGURIDAD',
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1.0,
+                                color: const Color(0xFFEF4444),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        if (weakPasswords.isNotEmpty)
+                          Text(
+                            '• ${weakPasswords.length} contraseña${weakPasswords.length > 1 ? 's' : ''} débil${weakPasswords.length > 1 ? 'es' : ''}: ${weakPasswords.join(", ")}',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: textSecondary,
+                            ),
+                          ),
+                        if (duplicateGroups.isNotEmpty)
+                          Text(
+                            '• ${duplicateGroups.length} grupo${duplicateGroups.length > 1 ? 's' : ''} de contraseñas duplicada${duplicateGroups.length > 1 ? 's' : ''}',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: textSecondary,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 if (_showGridView)
                   _buildGridView(
                     items,
@@ -1352,7 +1597,7 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _VaultGridCard extends StatelessWidget {
+class _VaultGridCard extends ConsumerWidget {
   final VaultItem item;
   final VoidCallback onTap;
   final Color textPrimary;
@@ -1371,79 +1616,149 @@ class _VaultGridCard extends StatelessWidget {
   });
 
   @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: borderColor.withValues(alpha: 0.10)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppTheme.stSurfaceContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      item.title.isEmpty ? '?' : item.title[0].toUpperCase(),
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.stPrimary,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      ref
+                          .read(vaultProvider.notifier)
+                          .updateItem(
+                            item.copyWith(isFavorite: !item.isFavorite),
+                          );
+                    },
+                    child: Icon(
+                      item.isFavorite ? LucideIcons.star : LucideIcons.starOff,
+                      size: 16,
+                      color: item.isFavorite
+                          ? const Color(0xFFF59E0B)
+                          : borderColor,
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Text(
+                item.title,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
+                  letterSpacing: -0.02,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                item.username ?? 'Sin usuario',
+                style: TextStyle(fontSize: 12, color: textSecondary),
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (item.category != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.stSurfaceContainer,
+                    borderRadius: BorderRadius.circular(9999),
+                  ),
+                  child: Text(
+                    item.category!.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.0,
+                      color: textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor.withValues(alpha: 0.10)),
+          color: selected
+              ? AppTheme.stPrimary
+              : (Theme.of(context).brightness == Brightness.dark
+                    ? AppTheme.darkSurfaceLow
+                    : AppTheme.stSurfaceLow),
+          borderRadius: BorderRadius.circular(9999),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppTheme.stSurfaceContainer,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    item.title.isEmpty ? '?' : item.title[0].toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.stPrimary,
-                    ),
-                  ),
-                ),
-                Icon(LucideIcons.star, size: 16, color: borderColor),
-              ],
-            ),
-            const Spacer(),
-            Text(
-              item.title,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: textPrimary,
-                letterSpacing: -0.02,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              item.username ?? 'Sin usuario',
-              style: TextStyle(fontSize: 12, color: textSecondary),
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (item.category != null) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppTheme.stSurfaceContainer,
-                  borderRadius: BorderRadius.circular(9999),
-                ),
-                child: Text(
-                  item.category!.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.0,
-                    color: textSecondary,
-                  ),
-                ),
-              ),
-            ],
-          ],
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: selected
+                ? const Color(0xFFFAF7F6)
+                : (Theme.of(context).brightness == Brightness.dark
+                      ? AppTheme.darkOnSurfaceVariant
+                      : AppTheme.stOnSurfaceVariant),
+          ),
         ),
       ),
     );
@@ -3120,30 +3435,30 @@ class _TasksViewState extends ConsumerState<TasksView> {
                     runSpacing: 8,
                     children: [
                       _TaskFilterChip(
-                        label: 'All',
+                        label: 'Todas',
                         isSelected: _filter == _TaskFilter.all,
                         onTap: () => setState(() => _filter = _TaskFilter.all),
                       ),
                       _TaskFilterChip(
-                        label: 'Today',
+                        label: 'Hoy',
                         isSelected: _filter == _TaskFilter.today,
                         onTap: () =>
                             setState(() => _filter = _TaskFilter.today),
                       ),
                       _TaskFilterChip(
-                        label: 'Planned',
+                        label: 'Planificadas',
                         isSelected: _filter == _TaskFilter.planned,
                         onTap: () =>
                             setState(() => _filter = _TaskFilter.planned),
                       ),
                       _TaskFilterChip(
-                        label: 'Important',
+                        label: 'Importantes',
                         isSelected: _filter == _TaskFilter.important,
                         onTap: () =>
                             setState(() => _filter = _TaskFilter.important),
                       ),
                       _TaskFilterChip(
-                        label: 'Completed',
+                        label: 'Completadas',
                         isSelected: _filter == _TaskFilter.completed,
                         onTap: () =>
                             setState(() => _filter = _TaskFilter.completed),
