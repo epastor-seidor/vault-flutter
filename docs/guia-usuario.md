@@ -1,6 +1,6 @@
 # Guía de Usuario
 
-> Última actualización: 31 de March, 2026
+> Última actualización: 01 de April, 2026
 
 Bienvenido a DevVault. Esta guía te explica cómo usar cada funcionalidad de la aplicación.
 

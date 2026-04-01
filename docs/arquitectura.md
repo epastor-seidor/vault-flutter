@@ -1,6 +1,6 @@
 # Arquitectura de DevVault
 
-> Última actualización: 31 de March, 2026
+> Última actualización: 01 de April, 2026
 
 ## Descripción General
 
