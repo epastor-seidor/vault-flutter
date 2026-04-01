@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:dev_vault/theme/app_theme.dart';
 
 enum ToastType { success, error, info, warning }
 
@@ -59,19 +60,23 @@ class ToastOverlay extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final toasts = ref.watch(toastProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Stack(
       children: [
         child,
         if (toasts.isNotEmpty)
           Positioned(
-            top: 24,
-            right: 24,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: toasts
-                  .map((toast) => _ToastItem(toast: toast))
-                  .toList(),
+            bottom: 24,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: toasts
+                    .map((toast) => _ToastItem(toast: toast, isDark: isDark))
+                    .toList(),
+              ),
             ),
           ),
       ],
@@ -79,15 +84,16 @@ class ToastOverlay extends ConsumerWidget {
   }
 }
 
-class _ToastItem extends StatefulWidget {
+class _ToastItem extends ConsumerStatefulWidget {
   final ToastMessage toast;
-  const _ToastItem({required this.toast});
+  final bool isDark;
+  const _ToastItem({required this.toast, required this.isDark});
 
   @override
-  State<_ToastItem> createState() => _ToastItemState();
+  ConsumerState<_ToastItem> createState() => _ToastItemState();
 }
 
-class _ToastItemState extends State<_ToastItem>
+class _ToastItemState extends ConsumerState<_ToastItem>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<Offset> _slideAnim;
@@ -101,7 +107,7 @@ class _ToastItemState extends State<_ToastItem>
       vsync: this,
     );
     _slideAnim = Tween<Offset>(
-      begin: const Offset(1.0, 0.0),
+      begin: const Offset(0.0, 1.0),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
     _fadeAnim = Tween<double>(
@@ -111,35 +117,31 @@ class _ToastItemState extends State<_ToastItem>
     _controller.forward();
   }
 
+  void _dismiss() {
+    _controller.reverse().then((_) {
+      if (mounted) {
+        ref.read(toastProvider.notifier).dismiss(widget.toast.id);
+      }
+    });
+  }
+
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
-  Color get _bgColor {
-    switch (widget.toast.type) {
-      case ToastType.success:
-        return const Color(0xFF065F46);
-      case ToastType.error:
-        return const Color(0xFF7F1D1D);
-      case ToastType.info:
-        return const Color(0xFF1E3A5F);
-      case ToastType.warning:
-        return const Color(0xFF78350F);
-    }
-  }
-
   Color get _iconColor {
+    final isDark = widget.isDark;
     switch (widget.toast.type) {
       case ToastType.success:
-        return const Color(0xFF34D399);
+        return isDark ? AppTheme.successDark : AppTheme.successLight;
       case ToastType.error:
-        return const Color(0xFFFCA5A5);
+        return isDark ? AppTheme.errorDark : AppTheme.errorLight;
       case ToastType.info:
-        return const Color(0xFF93C5FD);
+        return isDark ? AppTheme.infoDark : AppTheme.infoLight;
       case ToastType.warning:
-        return const Color(0xFFFCD34D);
+        return isDark ? AppTheme.warningDark : AppTheme.warningLight;
     }
   }
 
@@ -158,44 +160,50 @@ class _ToastItemState extends State<_ToastItem>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    final bgColor = isDark ? const Color(0xFF2F2F2F) : const Color(0xFFFFFFFF);
+    final textColor = isDark
+        ? const Color(0xFFFFFFFF)
+        : const Color(0xFF37352F);
+    final borderColor = isDark
+        ? const Color(0xFF3D3D3D)
+        : const Color(0xFFE9E9E7);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: SlideTransition(
         position: _slideAnim,
         child: FadeTransition(
           opacity: _fadeAnim,
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 320),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: _bgColor,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(_icon, size: 16, color: _iconColor),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    widget.toast.message,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
+          child: GestureDetector(
+            onTap: _dismiss,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 360),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(5),
+                border: Border.all(color: borderColor, width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(_icon, size: 16, color: _iconColor),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      widget.toast.message,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: textColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

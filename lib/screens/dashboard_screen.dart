@@ -29,6 +29,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:dev_vault/widgets/notion_empty_state.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -209,15 +210,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           children: [
                             if (!isCompact)
                               Container(
-                                width: 220,
-                                decoration: BoxDecoration(
-                                  border: Border(
-                                    right: BorderSide(
-                                      color: Theme.of(context).dividerColor,
-                                      width: 1,
-                                    ),
-                                  ),
-                                ),
+                                width: 224,
+                                color: isDark
+                                    ? const Color(0xFF202020)
+                                    : const Color(0xFFFBFBFA),
                                 child: _buildSidebarContent(),
                               ),
                             Expanded(
@@ -331,8 +327,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Widget _buildTopAppBar({required bool isCompact}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Stitch: glassy top bar with ghost border, bg/80 + blur
-    final bg = isDark ? const Color(0xFF141414) : const Color(0xFFF9F9F7);
+    final bg = isDark ? AppTheme.darkBg : AppTheme.stBg;
     final crumb = switch (_selectedIndex) {
       1 => 'Credenciales',
       2 => 'Notas',
@@ -342,13 +337,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     };
 
     return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: bg.withValues(alpha: isDark ? 0.92 : 0.88),
+        color: bg,
         border: Border(
           bottom: BorderSide(
-            color: const Color(0xFFADB3B0).withValues(alpha: 0.15),
+            color: isDark ? const Color(0xFF333333) : const Color(0xFFE3E2E0),
+            width: 1,
           ),
         ),
       ),
@@ -359,119 +355,117 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               icon: Icon(
                 LucideIcons.menu,
                 size: 18,
-                color: isDark ? Colors.white54 : AppTheme.stOnSurfaceVariant,
+                color: isDark ? Colors.white54 : const Color(0xFF787774),
               ),
               onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             ),
-          const Spacer(),
-          Text(
-            crumb,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : AppTheme.stOnSurface,
-            ),
+          const SizedBox(width: 8),
+          // Breadcrumb - Notion style (left-aligned)
+          Row(
+            children: [
+              Icon(
+                LucideIcons.shield,
+                size: 16,
+                color: isDark
+                    ? const Color(0xFF9B9B9B)
+                    : const Color(0xFF787774),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                crumb,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: isDark
+                      ? const Color(0xFFD4D4D4)
+                      : const Color(0xFF37352F),
+                ),
+              ),
+            ],
           ),
           const Spacer(),
-          // Search
+          // Search - Notion style (compact)
           SizedBox(
-            width: isCompact ? 140 : 200,
-            height: 32,
+            width: isCompact ? 120 : 180,
+            height: 28,
             child: TextField(
               controller: _globalSearchController,
               focusNode: _globalSearchFocusNode,
               onChanged: (v) => setState(() => _globalSearchQuery = v),
               style: TextStyle(
                 fontSize: 13,
-                color: isDark ? Colors.white : AppTheme.stOnSurface,
+                color: isDark ? Colors.white : const Color(0xFF37352F),
               ),
               decoration: InputDecoration(
-                hintText: 'Search...',
+                hintText: 'Buscar...',
                 hintStyle: TextStyle(
                   fontSize: 13,
-                  color: isDark ? Colors.white38 : AppTheme.stOnSurfaceVariant,
+                  color: isDark
+                      ? const Color(0xFF666666)
+                      : const Color(0xFF9B9A97),
                 ),
                 prefixIcon: Icon(
                   LucideIcons.search,
                   size: 14,
-                  color: isDark ? Colors.white38 : AppTheme.stOnSurfaceVariant,
+                  color: isDark
+                      ? const Color(0xFF666666)
+                      : const Color(0xFF787774),
+                ),
+                prefixIconConstraints: const BoxConstraints(
+                  minWidth: 24,
+                  minHeight: 24,
                 ),
                 filled: true,
                 fillColor: isDark
-                    ? const Color(0xFF242426)
-                    : AppTheme.stSurfaceLow,
-                contentPadding: const EdgeInsets.symmetric(vertical: 6),
+                    ? const Color(0xFF252525)
+                    : const Color(0xFFF7F7F5),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 4,
+                  horizontal: 8,
+                ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(4),
                   borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(4),
                   borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(4),
                   borderSide: BorderSide(
-                    color: AppTheme.stPrimary.withValues(alpha: 0.5),
+                    color: isDark
+                        ? const Color(0xFF447ACB)
+                        : const Color(0xFF529CCA),
+                    width: 1.5,
                   ),
                 ),
+                isDense: true,
               ),
             ),
           ),
-          const SizedBox(width: 6),
-          // Quick action buttons
-          _QuickActionBtn(
-            icon: LucideIcons.key,
-            label: 'Credencial',
-            tooltip: 'Ctrl+Shift+C',
-            onPressed: () => VaultView.showAddDialog(context, ref),
-          ),
-          const SizedBox(width: 4),
-          _QuickActionBtn(
-            icon: LucideIcons.fileText,
-            label: 'Nota',
-            tooltip: 'Ctrl+Shift+N',
-            onPressed: () => NotesView.showAddNoteDialog(context, ref),
-          ),
-          const SizedBox(width: 4),
-          _QuickActionBtn(
-            icon: LucideIcons.checkSquare,
-            label: 'Tarea',
-            tooltip: 'Ctrl+Shift+T',
-            onPressed: () => TasksView.showAddTaskDialog(context, ref),
-          ),
           const SizedBox(width: 8),
-          IconButton(
-            icon: Icon(
-              LucideIcons.refreshCw,
-              size: 15,
-              color: isDark ? Colors.white54 : AppTheme.stOnSurfaceVariant,
-            ),
-            tooltip: 'Sincronizar',
-            onPressed: () {},
-          ),
-          const SizedBox(width: 4),
-          // New Item — Stitch style: primary bg, small rounded
+          // New button - Notion style (dark fill, 3px radius)
           ElevatedButton(
             onPressed: _handleCreateShortcut,
             style: ElevatedButton.styleFrom(
               backgroundColor: isDark
-                  ? const Color(0xFFE5E2E1)
-                  : AppTheme.stPrimary,
-              foregroundColor: isDark
-                  ? AppTheme.stOnSurface
-                  : const Color(0xFFFAF7F6),
+                  ? const Color(0xFF2E7CD1)
+                  : const Color(0xFF37352F),
+              foregroundColor: const Color(0xFFFFFFFF),
               elevation: 0,
               shadowColor: Colors.transparent,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(3),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              minimumSize: const Size(0, 34),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              minimumSize: const Size(0, 28),
             ),
-            child: const Text(
+            child: Text(
               'Nuevo',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
             ),
           ),
         ],
@@ -485,25 +479,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Branding header ─────────────────────────────
+        // Branding header - Notion style
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
           child: Row(
             children: [
               Container(
-                width: 28,
-                height: 28,
+                width: 22,
+                height: 22,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF333333) : AppTheme.stPrimary,
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(3),
                 ),
                 child: const Text(
                   'V',
                   style: TextStyle(
-                    color: Color(0xFFFAF7F6),
+                    color: Color(0xFFFFFFFF),
                     fontWeight: FontWeight.w600,
-                    fontSize: 12,
+                    fontSize: 10,
                   ),
                 ),
               ),
@@ -512,18 +506,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 'DevVault',
                 style: TextStyle(
                   fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : const Color(0xFF191919),
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? Colors.white : const Color(0xFF37352F),
                 ),
               ),
             ],
           ),
         ),
 
-        // ── Nav items ────────────────────────────────────
+        const SizedBox(height: 4),
+
+        // Nav items - Notion style
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(vertical: 2),
             child: Column(
               children: [
                 _SidebarItem(
@@ -558,10 +554,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
         ),
 
-        // ── Bottom: Settings + Lock ────────────
-        Divider(
-          height: 1,
-          color: AppTheme.stOutlineVariant.withValues(alpha: 0.10),
+        // Bottom: Settings + Lock
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Divider(
+            height: 1,
+            color: isDark ? const Color(0xFF333333) : const Color(0xFFE3E2E0),
+          ),
         ),
         _SidebarItem(
           icon: LucideIcons.settings2,
@@ -676,45 +675,67 @@ class _SidebarItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final selectedBg = isDark
-        ? const Color(0xFF2C2C2E)
-        : AppTheme.stSurfaceContainer;
-    final selectedText = isDark ? Colors.white : const Color(0xFF191919);
-    final unselectedText = isDark
-        ? Colors.white54
-        : AppTheme.stOnSurfaceVariant;
+        ? const Color(0xFF2C2C2C)
+        : const Color(0xFFE8E8E8);
+    final hoverBg = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFEFEFEF);
+    final textColor = isDark
+        ? const Color(0xFFD4D4D4)
+        : const Color(0xFF37352F);
+    final iconColor = isDark
+        ? const Color(0xFF9B9B9B)
+        : const Color(0xFF9B9A97);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 1),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          curve: Curves.easeOut,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-          decoration: BoxDecoration(
-            color: isSelected ? selectedBg : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                size: 16,
-                color: isSelected ? selectedText : unselectedText,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? selectedText : unselectedText,
+      padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 1),
+      child: StatefulBuilder(
+        builder: (context, setInnerState) {
+          bool isHovered = false;
+          return MouseRegion(
+            onEnter: (_) => setInnerState(() => isHovered = true),
+            onExit: (_) => setInnerState(() => isHovered = false),
+            cursor: SystemMouseCursors.click,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(3),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 100),
+                curve: Curves.easeOut,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? selectedBg
+                      : isHovered
+                      ? hoverBg
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      icon,
+                      size: 16,
+                      color: isSelected ? textColor : iconColor,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: isSelected
+                            ? FontWeight.w500
+                            : FontWeight.w400,
+                        color: textColor,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -736,25 +757,49 @@ class HomeOverview extends ConsumerWidget {
     final hoverBg = isDark ? AppTheme.darkSurfaceLow : AppTheme.stSurfaceLow;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
+      padding: const EdgeInsets.symmetric(horizontal: 96, vertical: 48),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Workspace',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-              letterSpacing: -0.02,
-            ),
+          // Page icon + title - Notion style
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF252525)
+                      : const Color(0xFFF7F7F5),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF333333)
+                        : const Color(0xFFE3E2E0),
+                    width: 1,
+                  ),
+                ),
+                child: Icon(LucideIcons.shield, size: 24, color: textSecondary),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Workspace',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
+                  letterSpacing: -0.02,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(
             'Accede a tus credenciales, notas y tareas desde un solo lugar.',
-            style: TextStyle(fontSize: 14, color: textSecondary, height: 1.5),
+            style: TextStyle(fontSize: 16, color: textSecondary, height: 1.5),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 40),
 
           // Quick access section
           _DashboardSection(
@@ -831,44 +876,43 @@ class _DashboardSection extends StatelessWidget {
         Row(
           children: [
             Icon(icon, size: 16, color: textSecondary),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Text(
               title,
               style: TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
                 color: textPrimary,
-                letterSpacing: -0.02,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Text(
               '(${items.length})',
               style: TextStyle(fontSize: 12, color: textSecondary),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         if (items.isEmpty)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 24),
             decoration: BoxDecoration(
               color: hoverBg,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(3),
             ),
             child: Column(
               children: [
                 Text(
                   emptyMessage,
-                  style: TextStyle(fontSize: 13, color: textSecondary),
+                  style: TextStyle(fontSize: 14, color: textSecondary),
                 ),
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: onAction,
                   child: Text(
                     emptyAction,
-                    style: const TextStyle(fontSize: 13),
+                    style: const TextStyle(fontSize: 14),
                   ),
                 ),
               ],
@@ -878,30 +922,42 @@ class _DashboardSection extends StatelessWidget {
           ...items.map(
             (item) => Padding(
               padding: const EdgeInsets.only(bottom: 2),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(6),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(icon, size: 14, color: textSecondary),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          item.title ?? '',
-                          style: TextStyle(fontSize: 13, color: textPrimary),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+              child: StatefulBuilder(
+                builder: (context, setS) {
+                  bool hovered = false;
+                  return MouseRegion(
+                    onEnter: (_) => setS(() => hovered = true),
+                    onExit: (_) => setS(() => hovered = false),
+                    cursor: SystemMouseCursors.click,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 100),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 6,
                       ),
-                    ],
-                  ),
-                ),
+                      decoration: BoxDecoration(
+                        color: hovered ? hoverBg : Colors.transparent,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(icon, size: 16, color: textSecondary),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              item.title ?? '',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -2094,61 +2150,8 @@ class _VaultViewState extends ConsumerState<VaultView> {
   }
 
   Widget _buildEmptyState(Color textPrimary, Color textSecondary) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 80),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: AppTheme.stSurfaceContainer,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              LucideIcons.shieldOff,
-              size: 36,
-              color: textSecondary.withValues(alpha: 0.4),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'No hay credenciales',
-            style: GoogleFonts.inter(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Crea tu primera credencial para comenzar',
-            style: GoogleFonts.inter(fontSize: 13, color: textSecondary),
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton.icon(
-            onPressed: () => VaultView.showAddDialog(context, ref),
-            icon: const Icon(LucideIcons.plus, size: 16),
-            label: Text(
-              'Crear primera credencial',
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.stPrimary,
-              foregroundColor: AppTheme.stOnPrimary,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            ),
-          ),
-        ],
-      ),
+    return NotionEmptyState.noCredentials(
+      onAction: () => VaultView.showAddDialog(context, ref),
     );
   }
 
@@ -2162,8 +2165,8 @@ class _VaultViewState extends ConsumerState<VaultView> {
     return Container(
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor),
+        borderRadius: BorderRadius.circular(3),
+        border: Border.all(color: borderColor, width: 1),
       ),
       child: Column(
         children: [
@@ -2358,8 +2361,8 @@ class _StatCard extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: cardBg,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: borderColor),
+          borderRadius: BorderRadius.circular(3),
+          border: Border.all(color: borderColor, width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2394,15 +2397,17 @@ class _StatCard extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: (badgeColor ?? Colors.green).withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(4),
+                      color: (badgeColor ?? AppTheme.successLight).withValues(
+                        alpha: 0.12,
+                      ),
+                      borderRadius: BorderRadius.circular(3),
                     ),
                     child: Text(
                       badge!,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: badgeColor ?? Colors.green,
+                        color: badgeColor ?? AppTheme.successLight,
                       ),
                     ),
                   ),
@@ -2451,24 +2456,18 @@ class _VaultGridCard extends ConsumerWidget {
       child: GestureDetector(
         onTap: isBatchMode ? onToggleSelect : onTap,
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: isSelected
-                ? AppTheme.stPrimary.withValues(alpha: 0.08)
+                ? AppTheme.stPrimary.withValues(alpha: 0.06)
                 : cardBg,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(3),
             border: Border.all(
               color: isSelected
-                  ? AppTheme.stPrimary.withValues(alpha: 0.4)
-                  : borderColor.withValues(alpha: 0.10),
+                  ? AppTheme.stPrimary.withValues(alpha: 0.3)
+                  : borderColor.withValues(alpha: 0.09),
+              width: 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isSelected ? 0.08 : 0.04),
-                blurRadius: isSelected ? 12 : 8,
-                offset: Offset(0, isSelected ? 4 : 2),
-              ),
-            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2479,17 +2478,17 @@ class _VaultGridCard extends ConsumerWidget {
                   Row(
                     children: [
                       Container(
-                        width: 40,
-                        height: 40,
+                        width: 36,
+                        height: 36,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: AppTheme.stSurfaceContainer,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(3),
                         ),
                         child: Icon(
                           getCategoryIcon(item.category),
-                          size: 18,
-                          color: AppTheme.stPrimary,
+                          size: 16,
+                          color: const Color(0xFF55534E),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -2498,7 +2497,7 @@ class _VaultGridCard extends ConsumerWidget {
                           isSelected
                               ? LucideIcons.checkSquare
                               : LucideIcons.square,
-                          size: 18,
+                          size: 16,
                           color: isSelected
                               ? AppTheme.stPrimary
                               : textSecondary,
@@ -2515,9 +2514,9 @@ class _VaultGridCard extends ConsumerWidget {
                     },
                     child: Icon(
                       item.isFavorite ? LucideIcons.star : LucideIcons.starOff,
-                      size: 16,
+                      size: 14,
                       color: item.isFavorite
-                          ? const Color(0xFFF59E0B)
+                          ? const Color(0xFFCB912F)
                           : borderColor,
                     ),
                   ),
@@ -2527,10 +2526,9 @@ class _VaultGridCard extends ConsumerWidget {
               Text(
                 item.title,
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                   color: textPrimary,
-                  letterSpacing: -0.02,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -2544,19 +2542,19 @@ class _VaultGridCard extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
+                    horizontal: 6,
+                    vertical: 2,
                   ),
                   decoration: BoxDecoration(
                     color: AppTheme.stSurfaceContainer,
-                    borderRadius: BorderRadius.circular(9999),
+                    borderRadius: BorderRadius.circular(3),
                   ),
                   child: Text(
                     item.category!.toUpperCase(),
                     style: TextStyle(
                       fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.0,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
                       color: textSecondary,
                     ),
                   ),

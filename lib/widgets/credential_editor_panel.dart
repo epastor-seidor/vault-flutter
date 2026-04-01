@@ -127,13 +127,7 @@ class _CredentialEditorPanelState extends ConsumerState<CredentialEditorPanel> {
       width: 480,
       decoration: BoxDecoration(
         color: surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.15),
-            blurRadius: 40,
-            offset: const Offset(-8, 0),
-          ),
-        ],
+        border: Border(left: BorderSide(color: outlineVariant, width: 1)),
       ),
       child: Column(
         children: [

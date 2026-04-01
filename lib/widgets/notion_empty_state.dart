@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:dev_vault/theme/app_theme.dart';
 
 class NotionEmptyState extends StatelessWidget {
   final IconData icon;
@@ -21,9 +22,9 @@ class NotionEmptyState extends StatelessWidget {
   factory NotionEmptyState.noCredentials({VoidCallback? onAction}) {
     return NotionEmptyState(
       icon: LucideIcons.key,
-      title: 'No credentials yet',
-      description: 'Save your first password or login to get started.',
-      actionLabel: 'Add credential',
+      title: 'No hay credenciales',
+      description: 'Guarda tu primera contraseña o login para comenzar.',
+      actionLabel: 'Agregar credencial',
       onAction: onAction,
     );
   }
@@ -31,9 +32,9 @@ class NotionEmptyState extends StatelessWidget {
   factory NotionEmptyState.noNotes({VoidCallback? onAction}) {
     return NotionEmptyState(
       icon: LucideIcons.fileText,
-      title: 'No notes yet',
-      description: 'Create your first note to capture ideas and information.',
-      actionLabel: 'Create note',
+      title: 'No hay notas',
+      description: 'Crea tu primera nota para capturar ideas e información.',
+      actionLabel: 'Crear nota',
       onAction: onAction,
     );
   }
@@ -41,9 +42,9 @@ class NotionEmptyState extends StatelessWidget {
   factory NotionEmptyState.noTasks({VoidCallback? onAction}) {
     return NotionEmptyState(
       icon: LucideIcons.checkCircle2,
-      title: 'No tasks yet',
-      description: 'Add your first task to stay organized.',
-      actionLabel: 'Create task',
+      title: 'No hay tareas',
+      description: 'Agrega tu primera tarea para mantenerte organizado.',
+      actionLabel: 'Crear tarea',
       onAction: onAction,
     );
   }
@@ -51,23 +52,23 @@ class NotionEmptyState extends StatelessWidget {
   factory NotionEmptyState.noResults({required String query}) {
     return NotionEmptyState(
       icon: LucideIcons.search,
-      title: 'No results found',
-      description: 'Nothing matches "$query". Try a different search.',
+      title: 'Sin resultados',
+      description:
+          'Nada coincide con "$query". Intenta una búsqueda diferente.',
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark
-        ? const Color(0xFFF9F9F7)
-        : const Color(0xFF2D3432);
+    final textPrimary = isDark ? AppTheme.darkOnSurface : AppTheme.stOnSurface;
     final textSecondary = isDark
-        ? const Color(0xFFAAAAAA)
-        : const Color(0xFF5A605E);
-    final surfaceLow = isDark
-        ? const Color(0xFF242426)
-        : const Color(0xFFF2F4F2);
+        ? AppTheme.darkOnSurfaceVariant
+        : AppTheme.stOnSurfaceVariant;
+    final surfaceLow = isDark ? AppTheme.darkSurfaceLow : AppTheme.stSurfaceLow;
+    final borderColor = isDark
+        ? AppTheme.darkOutlineVariant
+        : AppTheme.stOutlineVariant;
 
     return Center(
       child: Padding(
@@ -75,23 +76,24 @@ class NotionEmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Icon container - Notion style (3px radius, thin border)
             Container(
               width: 48,
               height: 48,
               decoration: BoxDecoration(
                 color: surfaceLow,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(3),
+                border: Border.all(color: borderColor, width: 1),
               ),
-              child: Icon(icon, size: 22, color: textSecondary),
+              child: Icon(icon, size: 20, color: textSecondary),
             ),
             const SizedBox(height: 16),
             Text(
               title,
               style: GoogleFonts.inter(
                 fontSize: 16,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
                 color: textPrimary,
-                letterSpacing: -0.02,
               ),
             ),
             const SizedBox(height: 6),
@@ -99,36 +101,36 @@ class NotionEmptyState extends StatelessWidget {
               description,
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
-                fontSize: 13,
+                fontSize: 14,
                 color: textSecondary,
                 height: 1.5,
               ),
             ),
             if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: onAction,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isDark
-                      ? const Color(0xFFE5E2E1)
-                      : const Color(0xFF5F5E5E),
+                      ? AppTheme.darkPrimary
+                      : AppTheme.stPrimaryDim,
                   foregroundColor: isDark
-                      ? const Color(0xFF2D3432)
-                      : const Color(0xFFFAF7F6),
+                      ? AppTheme.darkOnPrimary
+                      : AppTheme.stOnPrimary,
                   elevation: 0,
                   shadowColor: Colors.transparent,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(3),
                   ),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
+                    horizontal: 14,
+                    vertical: 8,
                   ),
                 ),
                 child: Text(
                   actionLabel!,
                   style: GoogleFonts.inter(
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
