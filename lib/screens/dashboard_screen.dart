@@ -23,7 +23,6 @@ import 'package:dev_vault/widgets/note_enhanced_view.dart';
 import 'package:dev_vault/widgets/toast_notification.dart';
 import 'package:dev_vault/widgets/onboarding_tour.dart';
 import 'package:dev_vault/services/password_auditor.dart';
-import 'package:dev_vault/services/password_auditor.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter/services.dart';
@@ -105,6 +104,37 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     // Ctrl+Shift+T - New task
     if (isCtrl && isShift && key == LogicalKeyboardKey.keyT) {
       TasksView.showAddTaskDialog(context, ref);
+      return true;
+    }
+
+    // Ctrl+Shift+F - Toggle favorites filter (on vault screen)
+    if (isCtrl && isShift && key == LogicalKeyboardKey.keyF) {
+      if (_selectedIndex == 1) {
+        ref.read(vaultFilterProvider.notifier).toggleFavorites();
+        ref
+            .read(toastProvider.notifier)
+            .show(
+              ref.read(vaultFilterProvider).showFavoritesOnly
+                  ? 'Filtro: Solo favoritos'
+                  : 'Filtro: Todos',
+              type: ToastType.info,
+            );
+      }
+      return true;
+    }
+
+    // Ctrl+Shift+S - Cycle sort modes (on vault screen)
+    if (isCtrl && isShift && key == LogicalKeyboardKey.keyS) {
+      if (_selectedIndex == 1) {
+        final sortModes = ['Fecha', 'Nombre A-Z', 'Nombre Z-A', 'Categoría'];
+        final current = ref.read(vaultFilterProvider).sortMode;
+        final idx = sortModes.indexOf(current);
+        final next = sortModes[(idx + 1) % sortModes.length];
+        ref.read(vaultFilterProvider.notifier).setSortMode(next);
+        ref
+            .read(toastProvider.notifier)
+            .show('Ordenar: $next', type: ToastType.info);
+      }
       return true;
     }
 
@@ -1043,9 +1073,6 @@ class VaultView extends ConsumerStatefulWidget {
 class _VaultViewState extends ConsumerState<VaultView> {
   VaultItem? _editingItem;
   bool _showGridView = false;
-  String _selectedCategory = 'Todas';
-  String _sortMode = 'Fecha';
-  bool _showFavoritesOnly = false;
   bool _batchMode = false;
   final Set<String> _selectedItems = {};
 
@@ -1076,6 +1103,84 @@ class _VaultViewState extends ConsumerState<VaultView> {
   int _passwordAgeDays(String? password, DateTime updatedAt) {
     if (password == null || password.isEmpty) return 0;
     return DateTime.now().difference(updatedAt).inDays;
+  }
+
+  String _getPasswordStrength(String? password) {
+    if (password == null || password.isEmpty) return 'Sin contraseña';
+    final len = password.length;
+    final hasUpper = password.contains(RegExp(r'[A-Z]'));
+    final hasLower = password.contains(RegExp(r'[a-z]'));
+    final hasDigit = password.contains(RegExp(r'[0-9]'));
+    final hasSpecial = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+    final score = [
+      hasUpper,
+      hasLower,
+      hasDigit,
+      hasSpecial,
+    ].where((b) => b).length;
+    if (len < 8 || score <= 1) return 'Débil';
+    if (len < 12 || score <= 2) return 'Media';
+    return 'Fuerte';
+  }
+
+  List<String> _getDynamicCategories(List<VaultItem> items) {
+    final categories = <String>{};
+    for (final item in items) {
+      if (item.category != null && item.category!.isNotEmpty) {
+        categories.add(item.category!);
+      }
+    }
+    final sorted = categories.toList()..sort();
+    return sorted;
+  }
+
+  bool _matchesSearchQuery(VaultItem item, String query) {
+    if (query.isEmpty) return true;
+
+    if (query.contains(':')) {
+      final parts = query.split(':');
+      final field = parts[0].toLowerCase();
+      final value = parts.sublist(1).join(':').toLowerCase();
+
+      switch (field) {
+        case 'user':
+        case 'usuario':
+          return (item.username?.toLowerCase().contains(value) ?? false);
+        case 'url':
+          return (item.url?.toLowerCase().contains(value) ?? false);
+        case 'title':
+        case 'titulo':
+          return item.title.toLowerCase().contains(value);
+        case 'note':
+        case 'nota':
+          return (item.notes?.toLowerCase().contains(value) ?? false);
+        case 'cat':
+        case 'category':
+        case 'categoria':
+          return (item.category?.toLowerCase().contains(value) ?? false);
+        default:
+          return _matchesAnyField(item, query);
+      }
+    }
+
+    return _matchesAnyField(item, query);
+  }
+
+  bool _matchesAnyField(VaultItem item, String query) {
+    final q = query.toLowerCase();
+    return item.title.toLowerCase().contains(q) ||
+        (item.username?.toLowerCase().contains(q) ?? false) ||
+        (item.url?.toLowerCase().contains(q) ?? false) ||
+        (item.notes?.toLowerCase().contains(q) ?? false) ||
+        (item.category?.toLowerCase().contains(q) ?? false);
+  }
+
+  int _getActiveFilterCount() {
+    return ref.read(vaultFilterProvider).activeFilterCount;
+  }
+
+  void _clearAllFilters() {
+    ref.read(vaultFilterProvider.notifier).clearAll();
   }
 
   void _exportCredentials(List<VaultItem> items) async {
@@ -1173,29 +1278,70 @@ class _VaultViewState extends ConsumerState<VaultView> {
         : AppTheme.stOnSurfaceVariant;
 
     final rawItems = ref.watch(vaultProvider);
+    final filters = ref.watch(vaultFilterProvider);
     final q = widget.globalQuery.trim().toLowerCase();
 
-    var items = q.isEmpty
-        ? rawItems
-        : rawItems.where((i) {
-            final titleMatch = i.title.toLowerCase().contains(q);
-            final userMatch = (i.username?.toLowerCase().contains(q) ?? false);
-            return titleMatch || userMatch;
-          }).toList();
+    var items = rawItems.where((i) => _matchesSearchQuery(i, q)).toList();
 
     // Filter by category
-    if (_selectedCategory != 'Todas') {
-      items = items.where((i) => i.category == _selectedCategory).toList();
+    if (filters.selectedCategory != 'Todas') {
+      items = items
+          .where((i) => i.category == filters.selectedCategory)
+          .toList();
     }
 
     // Filter favorites
-    if (_showFavoritesOnly) {
+    if (filters.showFavoritesOnly) {
       items = items.where((i) => i.isFavorite).toList();
+    }
+
+    // Filter by password strength
+    if (filters.passwordStrengthFilter != 'Todas') {
+      items = items.where((i) {
+        final strength = _getPasswordStrength(i.password);
+        return strength == filters.passwordStrengthFilter;
+      }).toList();
+    }
+
+    // Filter by password age
+    if (filters.passwordAgeFilter != 'Todas') {
+      items = items.where((i) {
+        final age = _passwordAgeDays(i.password, i.updatedAt);
+        switch (filters.passwordAgeFilter) {
+          case '<30 días':
+            return age < 30;
+          case '30-90 días':
+            return age >= 30 && age <= 90;
+          case '>90 días':
+            return age > 90;
+          default:
+            return true;
+        }
+      }).toList();
+    }
+
+    // Filter duplicates only
+    if (filters.showDuplicatesOnly) {
+      final duplicateHashes = <String>{};
+      final duplicateItems = <VaultItem>[];
+      for (final item in items) {
+        if (item.password != null && item.password!.isNotEmpty) {
+          final hash = item.password!;
+          if (duplicateHashes.contains(hash)) {
+            if (!duplicateItems.any((i) => i.password == hash)) {
+              duplicateItems.add(items.firstWhere((i) => i.password == hash));
+            }
+            duplicateItems.add(item);
+          }
+          duplicateHashes.add(hash);
+        }
+      }
+      items = duplicateItems;
     }
 
     // Sort
     items = [...items];
-    switch (_sortMode) {
+    switch (filters.sortMode) {
       case 'Nombre A-Z':
         items.sort((a, b) => a.title.compareTo(b.title));
         break;
@@ -1221,6 +1367,8 @@ class _VaultViewState extends ConsumerState<VaultView> {
     final securityScore = PasswordAuditor.calculateOverallSecurityScore(items);
     final weakPasswords = PasswordAuditor.findWeakPasswords(items);
     final duplicateGroups = PasswordAuditor.findDuplicatePasswords(items);
+    final dynamicCategories = _getDynamicCategories(rawItems);
+    final activeFilters = filters.activeFilterCount;
 
     return Stack(
       children: [
@@ -1368,7 +1516,7 @@ class _VaultViewState extends ConsumerState<VaultView> {
                 // ── Filters & Sorting ──
                 Row(
                   children: [
-                    // Category chips
+                    // Category chips - dynamic
                     Expanded(
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
@@ -1376,39 +1524,26 @@ class _VaultViewState extends ConsumerState<VaultView> {
                           children: [
                             _FilterChip(
                               label: 'Todas',
-                              selected: _selectedCategory == 'Todas',
-                              onTap: () =>
-                                  setState(() => _selectedCategory = 'Todas'),
+                              selected: filters.selectedCategory == 'Todas',
+                              onTap: () => ref
+                                  .read(vaultFilterProvider.notifier)
+                                  .setCategory('Todas'),
                             ),
                             const SizedBox(width: 6),
-                            _FilterChip(
-                              label: 'Login',
-                              selected: _selectedCategory == 'Login',
-                              onTap: () =>
-                                  setState(() => _selectedCategory = 'Login'),
-                            ),
-                            const SizedBox(width: 6),
-                            _FilterChip(
-                              label: 'API Key',
-                              selected: _selectedCategory == 'API Key',
-                              onTap: () =>
-                                  setState(() => _selectedCategory = 'API Key'),
-                            ),
-                            const SizedBox(width: 6),
-                            _FilterChip(
-                              label: 'Database',
-                              selected: _selectedCategory == 'Database',
-                              onTap: () => setState(
-                                () => _selectedCategory = 'Database',
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            _FilterChip(
-                              label: 'Email',
-                              selected: _selectedCategory == 'Email',
-                              onTap: () =>
-                                  setState(() => _selectedCategory = 'Email'),
-                            ),
+                            ...dynamicCategories
+                                .map(
+                                  (cat) => [
+                                    _FilterChip(
+                                      label: cat,
+                                      selected: filters.selectedCategory == cat,
+                                      onTap: () => ref
+                                          .read(vaultFilterProvider.notifier)
+                                          .setCategory(cat),
+                                    ),
+                                    const SizedBox(width: 6),
+                                  ],
+                                )
+                                .expand((e) => e),
                           ],
                         ),
                       ),
@@ -1424,7 +1559,7 @@ class _VaultViewState extends ConsumerState<VaultView> {
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: DropdownButton<String>(
-                        value: _sortMode,
+                        value: filters.sortMode,
                         underline: const SizedBox(),
                         icon: Icon(
                           LucideIcons.arrowUpDown,
@@ -1446,55 +1581,247 @@ class _VaultViewState extends ConsumerState<VaultView> {
                                   ),
                                 )
                                 .toList(),
-                        onChanged: (v) => setState(() => _sortMode = v!),
+                        onChanged: (v) => ref
+                            .read(vaultFilterProvider.notifier)
+                            .setSortMode(v!),
                       ),
                     ),
                     const SizedBox(width: 8),
                     // Favorites toggle
-                    GestureDetector(
-                      onTap: () => setState(
-                        () => _showFavoritesOnly = !_showFavoritesOnly,
+                    Tooltip(
+                      message: 'Mostrar solo favoritos (Ctrl+Shift+F)',
+                      child: GestureDetector(
+                        onTap: () => setState(
+                          () => ref
+                              .read(vaultFilterProvider.notifier)
+                              .toggleFavorites(),
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: filters.showFavoritesOnly
+                                ? const Color(
+                                    0xFFF59E0B,
+                                  ).withValues(alpha: 0.15)
+                                : (isDark
+                                      ? AppTheme.darkSurfaceLow
+                                      : AppTheme.stSurfaceLow),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                filters.showFavoritesOnly
+                                    ? LucideIcons.star
+                                    : LucideIcons.starOff,
+                                size: 14,
+                                color: filters.showFavoritesOnly
+                                    ? const Color(0xFFF59E0B)
+                                    : textSecondary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Fav',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: filters.showFavoritesOnly
+                                      ? const Color(0xFFF59E0B)
+                                      : textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      child: Container(
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // ── Advanced Filters Row ──
+                Row(
+                  children: [
+                    // Password strength filter
+                    Container(
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppTheme.darkSurfaceLow
+                            : AppTheme.stSurfaceLow,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: DropdownButton<String>(
+                        value: filters.passwordStrengthFilter,
+                        underline: const SizedBox(),
+                        icon: Icon(
+                          LucideIcons.shield,
+                          size: 14,
+                          color: textSecondary,
+                        ),
+                        items:
+                            [
+                                  'Todas',
+                                  'Débil',
+                                  'Media',
+                                  'Fuerte',
+                                  'Sin contraseña',
+                                ]
+                                .map(
+                                  (m) => DropdownMenuItem(
+                                    value: m,
+                                    child: Text(
+                                      m,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        color: textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged: (v) => ref
+                            .read(vaultFilterProvider.notifier)
+                            .setPasswordStrength(v!),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Password age filter
+                    Container(
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppTheme.darkSurfaceLow
+                            : AppTheme.stSurfaceLow,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: DropdownButton<String>(
+                        value: filters.passwordAgeFilter,
+                        underline: const SizedBox(),
+                        icon: Icon(
+                          LucideIcons.clock,
+                          size: 14,
+                          color: textSecondary,
+                        ),
+                        items: ['Todas', '<30 días', '30-90 días', '>90 días']
+                            .map(
+                              (m) => DropdownMenuItem(
+                                value: m,
+                                child: Text(
+                                  m,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    color: textPrimary,
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (v) => ref
+                            .read(vaultFilterProvider.notifier)
+                            .setPasswordAge(v!),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Duplicates toggle
+                    Tooltip(
+                      message: 'Mostrar solo contraseñas duplicadas',
+                      child: GestureDetector(
+                        onTap: () => ref
+                            .read(vaultFilterProvider.notifier)
+                            .toggleDuplicates(),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: filters.showDuplicatesOnly
+                                ? const Color(
+                                    0xFFEF4444,
+                                  ).withValues(alpha: 0.15)
+                                : (isDark
+                                      ? AppTheme.darkSurfaceLow
+                                      : AppTheme.stSurfaceLow),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                LucideIcons.copy,
+                                size: 14,
+                                color: filters.showDuplicatesOnly
+                                    ? const Color(0xFFEF4444)
+                                    : textSecondary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Duplicadas',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: filters.showDuplicatesOnly
+                                      ? const Color(0xFFEF4444)
+                                      : textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    // Active filter count + clear button
+                    if (activeFilters > 0) ...[
+                      Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
+                          horizontal: 8,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: _showFavoritesOnly
-                              ? const Color(0xFFF59E0B).withValues(alpha: 0.15)
-                              : (isDark
-                                    ? AppTheme.darkSurfaceLow
-                                    : AppTheme.stSurfaceLow),
-                          borderRadius: BorderRadius.circular(8),
+                          color: AppTheme.stPrimary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              _showFavoritesOnly
-                                  ? LucideIcons.star
-                                  : LucideIcons.starOff,
-                              size: 14,
-                              color: _showFavoritesOnly
-                                  ? const Color(0xFFF59E0B)
-                                  : textSecondary,
+                              LucideIcons.filter,
+                              size: 12,
+                              color: AppTheme.stPrimary,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              'Fav',
+                              '$activeFilters activo${activeFilters > 1 ? 's' : ''}',
                               style: GoogleFonts.inter(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: _showFavoritesOnly
-                                    ? const Color(0xFFF59E0B)
-                                    : textSecondary,
+                                color: AppTheme.stPrimary,
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      TextButton.icon(
+                        onPressed: _clearAllFilters,
+                        icon: const Icon(LucideIcons.x, size: 14),
+                        label: Text(
+                          'Limpiar filtros',
+                          style: GoogleFonts.inter(fontSize: 11),
+                        ),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -3655,47 +3982,381 @@ class SettingsView extends ConsumerWidget {
   const SettingsView({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final settings = ref.watch(settingsProvider);
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(48),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Ajustes',
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 48),
-          _SettingBox(
-            title: 'Modo de Tema',
-            icon: LucideIcons.moon,
-            trailing: DropdownButton<ThemeMode>(
-              value: settings.themeMode,
-              items: const [
-                DropdownMenuItem(value: ThemeMode.light, child: Text('Claro')),
-                DropdownMenuItem(value: ThemeMode.dark, child: Text('Oscuro')),
-              ],
-              onChanged: (v) =>
-                  ref.read(settingsProvider.notifier).setThemeMode(v!),
+    final surfaceColor = isDark ? AppTheme.darkSurface : AppTheme.stSurface;
+    final textPrimary = isDark ? AppTheme.darkOnSurface : AppTheme.stOnSurface;
+    final textSecondary = isDark
+        ? AppTheme.darkOnSurfaceVariant
+        : AppTheme.stOnSurfaceVariant;
+
+    return Scaffold(
+      backgroundColor: isDark ? AppTheme.darkBg : AppTheme.stBg,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(48),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Ajustes',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: textPrimary,
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
-          _SettingBox(
-            title: 'Contraseña Maestra',
-            icon: LucideIcons.lock,
-            trailing: Switch(
-              value: settings.hasMasterPassword,
-              onChanged: (v) {
-                if (v) {
-                  _showPasswordSetDialog(context, ref);
-                } else {
-                  ref.read(settingsProvider.notifier).disableMasterPassword();
+            const SizedBox(height: 16),
+            Text(
+              'Configura el tema y la seguridad de tu bóveda.',
+              style: TextStyle(fontSize: 14, color: textSecondary),
+            ),
+            const SizedBox(height: 48),
+            _ModernSettingCard(
+              isDark: isDark,
+              icon: LucideIcons.palette,
+              title: 'Apariencia',
+              subtitle: 'Personaliza el tema de la aplicación',
+              child: DropdownButton<ThemeMode>(
+                value: settings.themeMode,
+                items: const [
+                  DropdownMenuItem(
+                    value: ThemeMode.light,
+                    child: Text('Claro'),
+                  ),
+                  DropdownMenuItem(
+                    value: ThemeMode.dark,
+                    child: Text('Oscuro'),
+                  ),
+                  DropdownMenuItem(
+                    value: ThemeMode.system,
+                    child: Text('Sistema'),
+                  ),
+                ],
+                onChanged: (v) =>
+                    ref.read(settingsProvider.notifier).setThemeMode(v!),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _ModernSettingCard(
+              isDark: isDark,
+              icon: LucideIcons.shieldCheck,
+              title: 'Contraseña Maestra',
+              subtitle: settings.hasMasterPassword
+                  ? 'Activada - Tu bóveda está protegida'
+                  : 'Desactivada - Activa para mayor seguridad',
+              trailing: Switch(
+                value: settings.hasMasterPassword,
+                onChanged: (v) {
+                  if (v) {
+                    _showPasswordSetDialogGlobal(context, ref);
+                  } else {
+                    ref.read(settingsProvider.notifier).disableMasterPassword();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Contraseña maestra desactivada'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            _ModernSettingCard(
+              isDark: isDark,
+              icon: LucideIcons.keyRound,
+              title: 'Cambiar Contraseña',
+              subtitle: 'Actualiza tu contraseña maestra actual',
+              enabled: settings.hasMasterPassword,
+              onTap: settings.hasMasterPassword
+                  ? () => _showPasswordChangeDialog(context, ref)
+                  : null,
+            ),
+            const SizedBox(height: 16),
+            _ModernSettingCard(
+              isDark: isDark,
+              icon: LucideIcons.download,
+              title: 'Exportar Datos',
+              subtitle: 'Descarga una copia de seguridad de tus credenciales',
+              onTap: () {
+                final items = ref.read(vaultProvider);
+                if (items.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Seguridad desactivada')),
+                    const SnackBar(
+                      content: Text('No hay credenciales para exportar'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
                   );
+                  return;
                 }
+                _exportCredentialsFromSettings(context, ref, items);
               },
             ),
+            const SizedBox(height: 16),
+            _ModernSettingCard(
+              isDark: isDark,
+              icon: LucideIcons.info,
+              title: 'Acerca de',
+              subtitle: 'DevVault v1.0.0 - Almacenamiento local seguro',
+              onTap: () => _showAboutDialog(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _exportCredentialsFromSettings(
+    BuildContext context,
+    WidgetRef ref,
+    List<VaultItem> items,
+  ) async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File(
+        '${dir.path}/devvault_export_${DateTime.now().millisecondsSinceEpoch}.json',
+      );
+      final data = items
+          .map(
+            (i) => {
+              'title': i.title,
+              'url': i.url,
+              'username': i.username,
+              'password': i.password,
+              'category': i.category,
+              'notes': i.notes,
+              'createdAt': i.createdAt.toIso8601String(),
+              'updatedAt': i.updatedAt.toIso8601String(),
+            },
+          )
+          .toList();
+      await file.writeAsString(jsonEncode(data));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Exportado exitosamente: ${file.path}'),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al exportar: $e'),
+            backgroundColor: const Color(0xFF9f403d),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.stPrimary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(LucideIcons.shield, size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text('DevVault'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('v1.0.0'),
+            const SizedBox(height: 8),
+            const Text(
+              'Bóveda segura para credenciales, notas y tareas. Todo almacenado localmente con encriptación.',
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPasswordChangeDialog(BuildContext context, WidgetRef ref) {
+    final currentC = TextEditingController();
+    final newC = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setLocal) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.stPrimary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(LucideIcons.keyRound, size: 20),
+                ),
+                const SizedBox(width: 12),
+                const Text('Cambiar Contraseña'),
+              ],
+            ),
+            content: SizedBox(
+              width: 400,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: currentC,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: 'Contraseña actual',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: newC,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: 'Nueva contraseña',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (currentC.text.isEmpty || newC.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Completa todos los campos'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                    return;
+                  }
+                  final settings = ref.read(settingsProvider);
+                  if (settings.masterPassword != currentC.text) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('La contraseña actual es incorrecta'),
+                        backgroundColor: Color(0xFF9f403d),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                    return;
+                  }
+                  ref
+                      .read(settingsProvider.notifier)
+                      .setMasterPassword(newC.text);
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Contraseña actualizada exitosamente'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                child: const Text('Guardar'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _showPasswordSetDialogGlobal(BuildContext context, WidgetRef ref) {
+    final c = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.stPrimary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(LucideIcons.lock, size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text('Configurar Contraseña'),
+          ],
+        ),
+        content: SizedBox(
+          width: 400,
+          child: TextField(
+            controller: c,
+            obscureText: true,
+            decoration: InputDecoration(
+              labelText: 'Nueva contraseña',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (c.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Ingresa una contraseña'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+                return;
+              }
+              ref.read(settingsProvider.notifier).setMasterPassword(c.text);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Contraseña configurada exitosamente'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            child: const Text('Guardar'),
           ),
         ],
       ),
@@ -3703,70 +4364,101 @@ class SettingsView extends ConsumerWidget {
   }
 }
 
-void _showPasswordSetDialog(BuildContext context, WidgetRef ref) {
-  final c = TextEditingController();
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-      title: const Text('Configurar Contraseña'),
-      content: TextField(
-        controller: c,
-        obscureText: true,
-        decoration: const InputDecoration(hintText: 'Nueva contraseña'),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            ref.read(settingsProvider.notifier).setMasterPassword(c.text);
-            Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Contraseña configurada')),
-            );
-          },
-          child: const Text('Guardar'),
-        ),
-      ],
-    ),
-  );
-}
-
-class _SettingBox extends StatelessWidget {
-  final String title;
+class _ModernSettingCard extends StatelessWidget {
+  final bool isDark;
   final IconData icon;
-  final Widget trailing;
-  const _SettingBox({
-    required this.title,
+  final String title;
+  final String subtitle;
+  final Widget? child;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final bool enabled;
+
+  const _ModernSettingCard({
+    required this.isDark,
     required this.icon,
-    required this.trailing,
+    required this.title,
+    required this.subtitle,
+    this.child,
+    this.trailing,
+    this.onTap,
+    this.enabled = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withOpacity(0.06)
-              : Colors.black.withOpacity(0.08),
+    final cardBg = isDark ? AppTheme.darkSurface : AppTheme.stSurface;
+    final borderColor = isDark
+        ? AppTheme.darkOutlineVariant.withValues(alpha: 0.15)
+        : AppTheme.stOutlineVariant.withValues(alpha: 0.15);
+    final textPrimary = isDark ? AppTheme.darkOnSurface : AppTheme.stOnSurface;
+    final textSecondary = isDark
+        ? AppTheme.darkOnSurfaceVariant
+        : AppTheme.stOnSurfaceVariant;
+
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: enabled ? cardBg : cardBg.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: borderColor),
         ),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 20),
-          const SizedBox(width: 16),
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-          const Spacer(),
-          trailing,
-        ],
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppTheme.stPrimary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: enabled
+                    ? AppTheme.stPrimary
+                    : textSecondary.withValues(alpha: 0.5),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: enabled
+                          ? textPrimary
+                          : textSecondary.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 12, color: textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            if (trailing != null) trailing!,
+            if (child != null) child!,
+            if (onTap != null && child == null && trailing == null)
+              Icon(LucideIcons.chevronRight, size: 16, color: textSecondary),
+            if (!enabled)
+              Text(
+                'Requiere contraseña',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: textSecondary.withValues(alpha: 0.6),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
